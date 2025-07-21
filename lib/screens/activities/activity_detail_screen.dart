@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../../models/activity.dart';
+import '../../models/brainstorm_idea.dart';
+import '../../providers/activity_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../widgets/activity/activity_card.dart';
+import 'activity_edit_screen.dart';
 
-class ActivityDetailScreen extends ConsumerWidget {
+class ActivityDetailScreen extends ConsumerStatefulWidget {
   const ActivityDetailScreen({
     super.key,
     required this.tripId,
@@ -12,64 +19,453 @@ class ActivityDetailScreen extends ConsumerWidget {
   final String activityId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Activity Details'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              // TODO: Navigate to edit activity screen
-            },
-          ),
-        ],
+  ConsumerState<ActivityDetailScreen> createState() => _ActivityDetailScreenState();
+}
+
+class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
+  final TextEditingController _brainstormController = TextEditingController();
+  bool _isAddingIdea = false;
+
+  @override
+  void dispose() {
+    _brainstormController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
+    final activityAsync = ref.watch(activityDetailNotifierProvider(widget.activityId));
+
+    return activityAsync.when(
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
+      error: (error, stack) => Scaffold(
+        appBar: AppBar(title: const Text('Activity Details')),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Theme.of(context).colorScheme.error,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load activity',
+                style: Theme.of(context).textTheme.headlineSmall,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                error.toString(),
+                style: Theme.of(context).textTheme.bodyMedium,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () => context.pop(),
+                child: const Text('Go Back'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (activity) {
+        if (activity == null) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Activity Details')),
+            body: const Center(
+              child: Text('Activity not found'),
+            ),
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(activity.place),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => _navigateToEdit(activity),
+              ),
+              PopupMenuButton<String>(
+                onSelected: (value) => _handleMenuAction(context, value, activity),
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, color: Colors.red),
+                        SizedBox(width: 8),
+                        Text('Delete Activity', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          body: Column(
+            children: [
+              // Activity Details Card
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: ActivityCard(
+                  activity: activity,
+                  showActions: false,
+                ),
+              ),
+              
+              // Brainstorm Ideas Section
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.lightbulb_outline,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Brainstorm Ideas',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            '${activity.brainstormIdeas.length}',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.outline,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Add Brainstorm Idea Input
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _brainstormController,
+                              decoration: const InputDecoration(
+                                hintText: 'Add a brainstorm idea...',
+                                border: OutlineInputBorder(),
+                                prefixIcon: Icon(Icons.lightbulb_outline),
+                              ),
+                              textInputAction: TextInputAction.send,
+                              onSubmitted: (_) => _addBrainstormIdea(),
+                              enabled: !_isAddingIdea,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: _isAddingIdea ? null : _addBrainstormIdea,
+                            icon: _isAddingIdea
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                  )
+                                : const Icon(Icons.send),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Brainstorm Ideas List
+                    Expanded(
+                      child: activity.brainstormIdeas.isEmpty
+                          ? Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.lightbulb_outline,
+                                    size: 48,
+                                    color: Theme.of(context).colorScheme.outline,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No brainstorm ideas yet',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.outline,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Add ideas to help plan this activity',
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: Theme.of(context).colorScheme.outline,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                              itemCount: activity.brainstormIdeas.length,
+                              itemBuilder: (context, index) {
+                                final idea = activity.brainstormIdeas[index];
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 8.0),
+                                  child: _BrainstormIdeaCard(
+                                    idea: idea,
+                                    onDelete: () => _deleteBrainstormIdea(idea.id),
+                                  ),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _navigateToEdit(Activity activity) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ActivityEditScreen(
+          tripId: widget.tripId,
+          activity: activity,
+        ),
+      ),
+    );
+  }
+
+  void _handleMenuAction(BuildContext context, String action, Activity activity) {
+    switch (action) {
+      case 'delete':
+        _showDeleteActivityDialog(activity);
+        break;
+    }
+  }
+
+  void _showDeleteActivityDialog(Activity activity) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.delete, color: Colors.red),
+            SizedBox(width: 8),
+            Text('Delete Activity'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Activity ID: $activityId',
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
+            Text('Are you sure you want to delete "${activity.place}"?'),
             const SizedBox(height: 8),
-            Text(
-              'Trip ID: $tripId',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            const SizedBox(height: 24),
-            const Text('Activity details will be implemented here'),
-            const SizedBox(height: 24),
             const Text(
-              'Brainstorm Ideas',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            Expanded(
-              child: ListView.builder(
-                itemCount: 2, // Mock data
-                itemBuilder: (context, index) {
-                  return Card(
-                    child: ListTile(
-                      leading: const Icon(Icons.lightbulb_outline),
-                      title: Text('Brainstorm idea ${index + 1}'),
-                      subtitle: const Text('Idea description'),
-                    ),
-                  );
-                },
+              'This action cannot be undone.',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.red,
               ),
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          // TODO: Add brainstorm idea functionality
-        },
-        child: const Icon(Icons.add),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () async {
+              try {
+                await ref.read(activityListNotifierProvider(widget.tripId).notifier)
+                    .deleteActivity(activity.id);
+                
+                if (mounted) {
+                  Navigator.of(context).pop(); // Close dialog
+                  context.pop(); // Go back to trip details
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          Icon(
+                            Icons.check_circle,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
+                          const SizedBox(width: 8),
+                          const Text('Activity deleted successfully'),
+                        ],
+                      ),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      behavior: SnackBarBehavior.floating,
+                      margin: const EdgeInsets.all(8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  );
+                }
+              } catch (error) {
+                if (mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete activity: ${error.toString()}'),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
       ),
     );
+  }
+
+  Future<void> _addBrainstormIdea() async {
+    final description = _brainstormController.text.trim();
+    if (description.isEmpty) return;
+
+    setState(() {
+      _isAddingIdea = true;
+    });
+
+    try {
+      await ref.read(activityListNotifierProvider(widget.tripId).notifier)
+          .addBrainstormIdea(widget.activityId, description);
+      
+      _brainstormController.clear();
+      
+      // Refresh the activity details
+      ref.invalidate(activityDetailNotifierProvider(widget.activityId));
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to add idea: ${error.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAddingIdea = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _deleteBrainstormIdea(String ideaId) async {
+    try {
+      await ref.read(activityListNotifierProvider(widget.tripId).notifier)
+          .removeBrainstormIdea(widget.activityId, ideaId);
+      
+      // Refresh the activity details
+      ref.invalidate(activityDetailNotifierProvider(widget.activityId));
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to delete idea: ${error.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+}
+
+class _BrainstormIdeaCard extends ConsumerWidget {
+  const _BrainstormIdeaCard({
+    required this.idea,
+    required this.onDelete,
+  });
+
+  final BrainstormIdea idea;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(authNotifierProvider).value;
+    final canDelete = currentUser?.id == idea.createdBy;
+
+    return Card(
+      margin: EdgeInsets.zero,
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.lightbulb_outline,
+              color: Theme.of(context).colorScheme.primary,
+              size: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    idea.description,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Added ${_formatDate(idea.createdAt)}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (canDelete) ...[
+              const SizedBox(width: 8),
+              IconButton(
+                icon: const Icon(Icons.delete_outline, size: 20),
+                onPressed: onDelete,
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final difference = now.difference(date);
+    
+    if (difference.inDays > 0) {
+      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
+    } else {
+      return 'Just now';
+    }
   }
 }

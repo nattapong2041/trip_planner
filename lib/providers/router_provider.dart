@@ -8,6 +8,7 @@ import '../screens/trips/trip_list_screen.dart';
 import '../screens/trips/trip_detail_screen.dart';
 import '../screens/trips/trip_create_screen.dart';
 import '../screens/activities/activity_detail_screen.dart';
+import '../screens/activities/activity_create_screen.dart';
 import 'auth_provider.dart';
 
 part 'router_provider.g.dart';
@@ -72,6 +73,14 @@ GoRouter router(Ref ref) {
               return TripDetailScreen(tripId: tripId);
             },
             routes: [
+              GoRoute(
+                path: '/activities/create',
+                name: 'activity-create',
+                builder: (context, state) {
+                  final tripId = state.pathParameters['tripId']!;
+                  return ActivityCreateScreen(tripId: tripId);
+                },
+              ),
               GoRoute(
                 path: '/activities/:activityId',
                 name: 'activity-detail',

@@ -42,7 +42,7 @@
   - Add trip editing and deletion functionality
   - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
 
-- [ ] 7. Implement activity management system
+- [x] 7. Implement activity management system
   - Create activity creation form with place, type, price, notes fields
   - Build activity cards display component
   - Implement activity pool (unassigned activities) view

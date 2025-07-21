@@ -182,11 +182,9 @@ class TripDetailScreen extends ConsumerWidget {
           ),
           floatingActionButton: FloatingActionButton(
             onPressed: () {
-              // TODO: Navigate to create activity screen (will be implemented in later tasks)
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Activity creation will be implemented in later tasks'),
-                ),
+              context.goNamed(
+                'activity-create',
+                pathParameters: {'tripId': tripId},
               );
             },
             child: const Icon(Icons.add),
@@ -218,11 +216,11 @@ class TripDetailScreen extends ConsumerWidget {
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: Row(
+          title: const Row(
             children: [
-              const Icon(Icons.edit),
-              const SizedBox(width: 8),
-              const Text('Edit Trip'),
+              Icon(Icons.edit),
+              SizedBox(width: 8),
+              Text('Edit Trip'),
             ],
           ),
           content: Form(

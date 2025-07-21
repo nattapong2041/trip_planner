@@ -35,9 +35,9 @@ GoRouter router(Ref ref) {
       final isAuthRoute = state.matchedLocation.startsWith('/auth');
       
       // If not authenticated and not on auth route, redirect to auth
-      // if (!isAuthenticated && !isAuthRoute) {
-      //   return '/auth';
-      // }
+      if (!isAuthenticated && !isAuthRoute) {
+        return '/auth';
+      }
       
       // If authenticated and on auth route, redirect to trips
       if (isAuthenticated && isAuthRoute) {

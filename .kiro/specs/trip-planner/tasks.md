@@ -35,7 +35,7 @@
   - Test navigation flow between all screens
   - _Requirements: 1.4, 9.1, 9.2_
 
-- [ ] 6. Build trip management screens
+- [x] 6. Build trip management screens
   - Create TripListScreen to display user trips with mock data
   - Implement trip creation form with name and duration
   - Build TripDetailScreen showing day-by-day structure

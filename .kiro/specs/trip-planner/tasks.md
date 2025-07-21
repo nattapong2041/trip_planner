@@ -28,7 +28,7 @@
   - Add ErrorNotifier for global error handling
   - _Requirements: 1.4, 2.4, 4.5, 8.3, 8.4, 9.5_
 
-- [ ] 5. Enhance navigation with authentication flow
+- [x] 5. Enhance navigation with authentication flow
   - Update Go Router with authentication guards and redirects
   - Create navigation structure for trips, activities, and authentication
   - Add route parameters for trip and activity detail screens

@@ -174,7 +174,7 @@ final class ErrorNotifierProvider
   }
 }
 
-String _$errorNotifierHash() => r'c35e3408ad2948a6c7411a5f3e2eab76d3b2c05b';
+String _$errorNotifierHash() => r'c108a368639639aa2a62eecbb026efec48f839c0';
 
 abstract class _$ErrorNotifier extends $Notifier<AppError?> {
   AppError? build();

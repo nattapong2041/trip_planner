@@ -49,7 +49,7 @@
   - Add activity editing and deletion functionality
   - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
-- [ ] 8. Build brainstorming feature for activities
+- [x] 8. Build brainstorming feature for activities
   - Create brainstorm ideas input interface within activity cards
   - Implement local state updates for brainstorming
   - Display brainstorm ideas with mock creator information and timestamps

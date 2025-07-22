@@ -519,7 +519,7 @@ class TripDetailScreen extends ConsumerWidget {
   }
 }
 
-class _TripDaysView extends StatelessWidget {
+class _TripDaysView extends ConsumerWidget {
   const _TripDaysView({
     required this.trip,
     required this.activities,
@@ -531,7 +531,7 @@ class _TripDaysView extends StatelessWidget {
   final Function(Activity) onActivityTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     // Group activities by day
     final Map<String, List<Activity>> activitiesByDay = {};
     final List<Activity> unassignedActivities = [];
@@ -553,17 +553,20 @@ class _TripDaysView extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       children: [
         // Activity Pool (unassigned activities)
-        if (unassignedActivities.isNotEmpty) ...[
-          _DaySection(
-            title: 'Activity Pool',
-            subtitle: 'Unassigned activities',
-            icon: Icons.inventory_2_outlined,
-            activities: unassignedActivities,
-            onActivityTap: onActivityTap,
-            isEmpty: false,
-          ),
-          const SizedBox(height: 16),
-        ],
+        _DragDropDaySection(
+          title: 'Activity Pool',
+          subtitle: unassignedActivities.isEmpty 
+              ? 'No unassigned activities'
+              : '${unassignedActivities.length} ${unassignedActivities.length == 1 ? 'activity' : 'activities'}',
+          icon: Icons.inventory_2_outlined,
+          activities: unassignedActivities,
+          onActivityTap: onActivityTap,
+          isEmpty: unassignedActivities.isEmpty,
+          dayKey: null, // null indicates activity pool
+          tripId: trip.id,
+          isActivityPool: true,
+        ),
+        const SizedBox(height: 16),
         
         // Day sections
         ...List.generate(trip.durationDays, (index) {
@@ -573,7 +576,7 @@ class _TripDaysView extends StatelessWidget {
           
           return Padding(
             padding: const EdgeInsets.only(bottom: 16.0),
-            child: _DaySection(
+            child: _DragDropDaySection(
               title: 'Day $dayNumber',
               subtitle: dayActivities.isEmpty 
                   ? 'No activities planned'
@@ -582,6 +585,9 @@ class _TripDaysView extends StatelessWidget {
               activities: dayActivities,
               onActivityTap: onActivityTap,
               isEmpty: dayActivities.isEmpty,
+              dayKey: dayKey,
+              tripId: trip.id,
+              isActivityPool: false,
             ),
           );
         }),
@@ -590,14 +596,17 @@ class _TripDaysView extends StatelessWidget {
   }
 }
 
-class _DaySection extends StatelessWidget {
-  const _DaySection({
+class _DragDropDaySection extends ConsumerWidget {
+  const _DragDropDaySection({
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.activities,
     required this.onActivityTap,
     required this.isEmpty,
+    required this.dayKey,
+    required this.tripId,
+    required this.isActivityPool,
   });
 
   final String title;
@@ -606,9 +615,12 @@ class _DaySection extends StatelessWidget {
   final List<Activity> activities;
   final Function(Activity) onActivityTap;
   final bool isEmpty;
+  final String? dayKey; // null for activity pool
+  final String tripId;
+  final bool isActivityPool;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -637,45 +649,168 @@ class _DaySection extends StatelessWidget {
                 ),
               ],
             ),
-            if (isEmpty) ...[
-              const SizedBox(height: 16),
-              Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.add_circle_outline,
-                      size: 32,
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Add activities to get started',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ] else ...[
-              const SizedBox(height: 12),
-              ...activities.map((activity) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: _ActivityCard(
-                  activity: activity,
-                  onTap: () => onActivityTap(activity),
-                ),
-              )),
-            ],
+            const SizedBox(height: 12),
+            _buildDragTarget(context, ref),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildDragTarget(BuildContext context, WidgetRef ref) {
+    return DragTarget<Activity>(
+      onAcceptWithDetails: (details) => _handleActivityDrop(context, ref, details.data),
+      builder: (context, candidateData, rejectedData) {
+        final isHighlighted = candidateData.isNotEmpty;
+        
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: isHighlighted
+                ? Border.all(
+                    color: Theme.of(context).colorScheme.primary,
+                    width: 2,
+                  )
+                : null,
+            color: isHighlighted
+                ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1)
+                : null,
+          ),
+          child: _buildActivityList(context, ref, isHighlighted),
+        );
+      },
+    );
+  }
+
+  Widget _buildActivityList(BuildContext context, WidgetRef ref, bool isHighlighted) {
+    if (isEmpty && !isHighlighted) {
+      return Container(
+        height: 80,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isActivityPool ? Icons.inventory_2_outlined : Icons.add_circle_outline,
+                size: 24,
+                color: Theme.of(context).colorScheme.outline,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                isActivityPool 
+                    ? 'Drag activities here to unassign'
+                    : 'Drag activities here to plan',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.outline,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (isActivityPool) {
+      // Activity pool - simple list without reordering
+      return Column(
+        children: activities.map((activity) => Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: _DraggableActivityCard(
+            activity: activity,
+            onTap: () => onActivityTap(activity),
+          ),
+        )).toList(),
+      );
+    } else {
+      // Day section - reorderable list
+      return ReorderableListView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        itemCount: activities.length,
+        onReorder: (oldIndex, newIndex) => _handleReorder(ref, oldIndex, newIndex),
+        itemBuilder: (context, index) {
+          final activity = activities[index];
+          return Padding(
+            key: ValueKey(activity.id),
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: _DraggableActivityCard(
+              activity: activity,
+              onTap: () => onActivityTap(activity),
+            ),
+          );
+        },
+      );
+    }
+  }
+
+  void _handleActivityDrop(BuildContext context, WidgetRef ref, Activity activity) async {
+    try {
+      if (isActivityPool) {
+        // Move to activity pool
+        await ref.read(activityListNotifierProvider(tripId).notifier)
+            .moveActivityToPool(activity.id);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${activity.place} moved to activity pool'),
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(8),
+            ),
+          );
+        }
+      } else {
+        // Move to specific day
+        final newOrder = activities.length; // Add to end
+        await ref.read(activityListNotifierProvider(tripId).notifier)
+            .moveActivityBetweenDays(activity.id, activity.assignedDay, dayKey!, newOrder);
+        
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('${activity.place} moved to $title'),
+              behavior: SnackBarBehavior.floating,
+              margin: const EdgeInsets.all(8),
+            ),
+          );
+        }
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to move activity: ${error.toString()}'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(8),
+          ),
+        );
+      }
+    }
+  }
+
+  void _handleReorder(WidgetRef ref, int oldIndex, int newIndex) async {
+    if (oldIndex < newIndex) {
+      newIndex -= 1;
+    }
+
+    // Create a new list with reordered activities
+    final reorderedActivities = List<Activity>.from(activities);
+    final activity = reorderedActivities.removeAt(oldIndex);
+    reorderedActivities.insert(newIndex, activity);
+
+    try {
+      await ref.read(activityListNotifierProvider(tripId).notifier)
+          .reorderActivitiesInDay(dayKey!, reorderedActivities);
+    } catch (error) {
+      // Error handling is done in the provider
+    }
+  }
 }
 
-class _ActivityCard extends StatelessWidget {
-  const _ActivityCard({
+class _DraggableActivityCard extends StatelessWidget {
+  const _DraggableActivityCard({
     required this.activity,
     required this.onTap,
   });
@@ -685,8 +820,53 @@ class _ActivityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Draggable<Activity>(
+      data: activity,
+      feedback: Material(
+        elevation: 8,
+        borderRadius: BorderRadius.circular(8),
+        child: SizedBox(
+          width: 300,
+          child: _ActivityCardContent(
+            activity: activity,
+            onTap: onTap,
+            isDragging: true,
+          ),
+        ),
+      ),
+      childWhenDragging: Opacity(
+        opacity: 0.5,
+        child: _ActivityCardContent(
+          activity: activity,
+          onTap: onTap,
+          isDragging: false,
+        ),
+      ),
+      child: _ActivityCardContent(
+        activity: activity,
+        onTap: onTap,
+        isDragging: false,
+      ),
+    );
+  }
+}
+
+class _ActivityCardContent extends StatelessWidget {
+  const _ActivityCardContent({
+    required this.activity,
+    required this.onTap,
+    required this.isDragging,
+  });
+
+  final Activity activity;
+  final VoidCallback onTap;
+  final bool isDragging;
+
+  @override
+  Widget build(BuildContext context) {
     return Card(
       margin: EdgeInsets.zero,
+      elevation: isDragging ? 8 : 1,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8.0),
@@ -694,6 +874,12 @@ class _ActivityCard extends StatelessWidget {
           padding: const EdgeInsets.all(12.0),
           child: Row(
             children: [
+              Icon(
+                Icons.drag_handle,
+                color: Theme.of(context).colorScheme.outline,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

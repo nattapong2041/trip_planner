@@ -138,6 +138,83 @@ class ActivityListNotifier extends _$ActivityListNotifier {
     }
   }
   
+  /// Reorder activities within a day
+  Future<void> reorderActivitiesInDay(String day, List<Activity> reorderedActivities) async {
+    try {
+      final activityRepository = ref.read(activityRepositoryProvider);
+      
+      // Update each activity with its new order
+      for (int i = 0; i < reorderedActivities.length; i++) {
+        final activity = reorderedActivities[i];
+        final updatedActivity = activity.copyWith(
+          assignedDay: day,
+          dayOrder: i,
+        );
+        await activityRepository.updateActivity(updatedActivity);
+      }
+    } catch (error, stackTrace) {
+      final appError = _handleActivityError(error);
+      ref.read(errorNotifierProvider.notifier).showError(appError);
+      rethrow;
+    }
+  }
+  
+  /// Move activity from one day to another with specific order
+  Future<void> moveActivityBetweenDays(String activityId, String? fromDay, String toDay, int newOrder) async {
+    try {
+      final activityRepository = ref.read(activityRepositoryProvider);
+      final activity = await activityRepository.getActivityById(activityId);
+      
+      if (activity == null) {
+        throw Exception('Activity not found');
+      }
+      
+      // Update the moved activity
+      final updatedActivity = activity.copyWith(
+        assignedDay: toDay,
+        dayOrder: newOrder,
+      );
+      
+      await activityRepository.updateActivity(updatedActivity);
+      
+      // If moving from a day (not from pool), reorder remaining activities in the source day
+      if (fromDay != null) {
+        final allActivities = await ref.read(activityListNotifierProvider(activity.tripId).future);
+        final remainingActivities = allActivities
+            .where((a) => a.assignedDay == fromDay && a.id != activityId)
+            .toList()
+          ..sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
+        
+        // Reorder remaining activities to fill the gap
+        for (int i = 0; i < remainingActivities.length; i++) {
+          final activityToUpdate = remainingActivities[i];
+          if (activityToUpdate.dayOrder != i) {
+            final reorderedActivity = activityToUpdate.copyWith(dayOrder: i);
+            await activityRepository.updateActivity(reorderedActivity);
+          }
+        }
+      }
+      
+      // Reorder activities in the destination day to make room
+      final allActivities = await ref.read(activityListNotifierProvider(activity.tripId).future);
+      final destinationActivities = allActivities
+          .where((a) => a.assignedDay == toDay && a.id != activityId)
+          .toList()
+        ..sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
+      
+      // Shift activities at and after the new position
+      for (int i = newOrder; i < destinationActivities.length; i++) {
+        final activityToUpdate = destinationActivities[i];
+        final reorderedActivity = activityToUpdate.copyWith(dayOrder: i + 1);
+        await activityRepository.updateActivity(reorderedActivity);
+      }
+    } catch (error, stackTrace) {
+      final appError = _handleActivityError(error);
+      ref.read(errorNotifierProvider.notifier).showError(appError);
+      rethrow;
+    }
+  }
+  
   /// Add a brainstorm idea to an activity
   Future<void> addBrainstormIdea(String activityId, String description) async {
     try {

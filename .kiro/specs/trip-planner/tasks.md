@@ -56,7 +56,7 @@
   - Add brainstorm idea count indicator on activity cards
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6_
 
-- [ ] 9. Implement day planning and activity assignment
+- [x] 9. Implement day planning and activity assignment
   - Create drag-and-drop interface for assigning activities to days
   - Build day view showing assigned activities in order
   - Implement activity reordering within days

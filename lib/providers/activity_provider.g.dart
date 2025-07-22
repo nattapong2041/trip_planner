@@ -98,7 +98,7 @@ final class ActivityListNotifierProvider
 }
 
 String _$activityListNotifierHash() =>
-    r'bb223129a6146c542a6d7aefc24bae65dd4425f3';
+    r'5b5ece82b3a5aeb95c97e25a5d180f9ddfb2017b';
 
 /// Notifier for managing activities for a specific trip
 final class ActivityListNotifierFamily extends $Family

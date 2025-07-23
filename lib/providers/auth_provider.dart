@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/user.dart';
 import '../models/app_error.dart';
@@ -12,25 +13,12 @@ AuthRepository authRepository(Ref ref) {
   return MockAuthRepository();
 }
 
-/// Provider that streams authentication state changes
-@riverpod
-Stream<User?> authState(Ref ref) {
-  final authRepository = ref.watch(authRepositoryProvider);
-  return authRepository.authStateChanges;
-}
-
 /// Notifier for managing authentication state and operations
 @riverpod
 class AuthNotifier extends _$AuthNotifier {
   @override
-  AsyncValue<User?> build() {
-    // Watch auth state changes and return as AsyncValue
-    final authState = ref.watch(authStateProvider);
-    return authState.when(
-      data: (user) => AsyncValue.data(user),
-      error: (error, stackTrace) => AsyncValue.error(error, stackTrace),
-      loading: () => const AsyncValue.loading(),
-    );
+  Stream<User?> build() {
+    return ref.watch(authRepositoryProvider).authStateChanges;
   }
   
   /// Sign in with Google authentication
@@ -38,7 +26,7 @@ class AuthNotifier extends _$AuthNotifier {
     try {
       final authRepository = ref.read(authRepositoryProvider);
       await authRepository.signInWithGoogle();
-      // State will be updated automatically through authStateProvider
+      // State will be updated automatically through the stream
     } catch (error) {
       final appError = _handleAuthError(error);
       // Notify global error handler
@@ -52,7 +40,7 @@ class AuthNotifier extends _$AuthNotifier {
     try {
       final authRepository = ref.read(authRepositoryProvider);
       await authRepository.signInWithApple();
-      // State will be updated automatically through authStateProvider
+      // State will be updated automatically through the stream
     } catch (error) {
       final appError = _handleAuthError(error);
       // Notify global error handler
@@ -66,7 +54,7 @@ class AuthNotifier extends _$AuthNotifier {
     try {
       final authRepository = ref.read(authRepositoryProvider);
       await authRepository.signOut();
-      // State will be updated automatically through authStateProvider
+      // State will be updated automatically through the stream
     } catch (error) {
       final appError = _handleAuthError(error);
       // Notify global error handler

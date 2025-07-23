@@ -19,7 +19,7 @@ GoRouter router(Ref ref) {
   final authStreamController = StreamController<User?>.broadcast();
   
   // Listen to auth state changes and forward to our controller
-  ref.listen(authStateProvider, (previous, next) {
+  ref.listen(authNotifierProvider, (previous, next) {
     next.when(
       data: (user) => authStreamController.add(user),
       loading: () => {},

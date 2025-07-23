@@ -50,49 +50,13 @@ final class AuthRepositoryProvider
 
 String _$authRepositoryHash() => r'866d07b3c40dd05f83eccba1be13d0f8f6aae65f';
 
-/// Provider that streams authentication state changes
-@ProviderFor(authState)
-const authStateProvider = AuthStateProvider._();
-
-/// Provider that streams authentication state changes
-final class AuthStateProvider
-    extends $FunctionalProvider<AsyncValue<User?>, User?, Stream<User?>>
-    with $FutureModifier<User?>, $StreamProvider<User?> {
-  /// Provider that streams authentication state changes
-  const AuthStateProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'authStateProvider',
-          isAutoDispose: true,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
-
-  @override
-  String debugGetCreateSourceHash() => _$authStateHash();
-
-  @$internal
-  @override
-  $StreamProviderElement<User?> $createElement($ProviderPointer pointer) =>
-      $StreamProviderElement(pointer);
-
-  @override
-  Stream<User?> create(Ref ref) {
-    return authState(ref);
-  }
-}
-
-String _$authStateHash() => r'c0ad919ebba9ac6c29aec4d522964d02322e0c1c';
-
 /// Notifier for managing authentication state and operations
 @ProviderFor(AuthNotifier)
 const authNotifierProvider = AuthNotifierProvider._();
 
 /// Notifier for managing authentication state and operations
 final class AuthNotifierProvider
-    extends $NotifierProvider<AuthNotifier, AsyncValue<User?>> {
+    extends $StreamNotifierProvider<AuthNotifier, User?> {
   /// Notifier for managing authentication state and operations
   const AuthNotifierProvider._()
       : super(
@@ -111,27 +75,19 @@ final class AuthNotifierProvider
   @$internal
   @override
   AuthNotifier create() => AuthNotifier();
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(AsyncValue<User?> value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<AsyncValue<User?>>(value),
-    );
-  }
 }
 
-String _$authNotifierHash() => r'50e1041fc0e99d89f8ed832a297003a61a46acf7';
+String _$authNotifierHash() => r'2738b0ef5bac63862d7c4dc6663eb8c005d8c7f1';
 
-abstract class _$AuthNotifier extends $Notifier<AsyncValue<User?>> {
-  AsyncValue<User?> build();
+abstract class _$AuthNotifier extends $StreamNotifier<User?> {
+  Stream<User?> build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<AsyncValue<User?>, AsyncValue<User?>>;
+    final ref = this.ref as $Ref<AsyncValue<User?>, User?>;
     final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<User?>, AsyncValue<User?>>,
+        AnyNotifier<AsyncValue<User?>, User?>,
         AsyncValue<User?>,
         Object?,
         Object?>;

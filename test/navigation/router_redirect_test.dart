@@ -134,7 +134,7 @@ void main() {
       final authStates = <User?>[];
       
       // Listen to the provider directly
-      container.listen(authStateProvider, (previous, next) {
+      container.listen(authNotifierProvider, (previous, next) {
         next.when(
           data: (user) => authStates.add(user),
           loading: () => {},

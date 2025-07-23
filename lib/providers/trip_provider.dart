@@ -18,18 +18,16 @@ TripRepository tripRepository(Ref ref) {
 class TripListNotifier extends _$TripListNotifier {
   @override
   Stream<List<Trip>> build() {
-    // Get the current authenticated user
-    final authState = ref.watch(authNotifierProvider);
-    
-    return authState.when(
+    // Listen to authentication state changes reactively
+    return ref.watch(authNotifierProvider).when(
       data: (user) {
         if (user == null) {
           // Return empty stream if no user is authenticated
           return Stream.value(<Trip>[]);
         }
-        
+        // Watch tripRepositoryProvider so it updates if the repo changes
+        final tripRepository = ref.watch(tripRepositoryProvider);
         // Return stream of trips for the authenticated user
-        final tripRepository = ref.read(tripRepositoryProvider);
         return tripRepository.getUserTrips(user.id);
       },
       loading: () => Stream.value(<Trip>[]),

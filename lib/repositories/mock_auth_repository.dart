@@ -12,8 +12,10 @@ class MockAuthRepository implements AuthRepository {
 
   MockAuthRepository() {
     // Initialize with no authenticated user
-    _currentUser = null;
-    _authStateController.add(null);
+    Future.microtask(() {
+      _currentUser = null;
+      _authStateController.add(null);
+    });
   }
 
   @override

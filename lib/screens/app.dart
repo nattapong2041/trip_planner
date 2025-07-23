@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/app_config.dart';
 import '../providers/router_provider.dart';
 import '../utils/responsive.dart';
+import '../widgets/common/global_feedback_overlay.dart';
 
 class TripPlannerApp extends ConsumerWidget {
   const TripPlannerApp({super.key});
@@ -18,6 +19,11 @@ class TripPlannerApp extends ConsumerWidget {
       themeMode: ThemeMode.system,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return GlobalFeedbackOverlay(
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 

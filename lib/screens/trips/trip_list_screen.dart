@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:trip_planner/models/app_error.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/trip_provider.dart';
 import '../../models/trip.dart';
 import '../../utils/responsive.dart';
+import '../../widgets/common/responsive_error_display.dart';
 
 class TripListScreen extends ConsumerWidget {
   const TripListScreen({super.key});
@@ -13,7 +13,6 @@ class TripListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tripsAsync = ref.watch(tripListNotifierProvider);
-    final errorState = ref.watch(errorNotifierProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -28,112 +27,24 @@ class TripListScreen extends ConsumerWidget {
         ],
       ),
       body: ResponsiveContainer(
-        child: Column(
-          children: [
-            // Error display
-            if (errorState != null)
-              Container(
-                width: double.infinity,
-                margin: EdgeInsets.only(
-                  bottom: Responsive.getSpacing(context),
-                ),
-                padding: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 12.0)),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.errorContainer,
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.error_outline,
-                      color: Theme.of(context).colorScheme.onErrorContainer,
-                      size: Responsive.getIconSize(context, baseSize: 20),
-                    ),
-                    SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
-                    Expanded(
-                      child: Text(
-                        errorState.when(
-                          network: (message) => message,
-                          authentication: (message) => message,
-                          permission: (message) => message,
-                          validation: (message) => message,
-                          unknown: (message) => message,
-                        ),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onErrorContainer,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.close,
-                        color: Theme.of(context).colorScheme.onErrorContainer,
-                        size: Responsive.getIconSize(context, baseSize: 20),
-                      ),
-                      onPressed: () {
-                        ref.read(errorNotifierProvider.notifier).clearError();
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            // Trips list
-            Expanded(
-              child: tripsAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (error, stackTrace) => Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.error_outline,
-                        size: Responsive.getIconSize(context, baseSize: 64),
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                      SizedBox(height: Responsive.getSpacing(context)),
-                      Text(
-                        'Failed to load trips',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
-                      Text(
-                        'Please try again later',
-                        style: Theme.of(context).textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
-                ),
-                data: (trips) {
-                  if (trips.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.luggage_outlined,
-                            size: Responsive.getIconSize(context, baseSize: 64),
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                          SizedBox(height: Responsive.getSpacing(context)),
-                          Text(
-                            'No trips yet',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                          SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
-                          Text(
-                            'Create your first trip to get started',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                        ],
-                      ),
-                    );
-                  }
+        child: tripsAsync.when(
+          loading: () => const ResponsiveLoadingIndicator(message: 'Loading trips...'),
+          error: (error, stackTrace) => ResponsiveErrorDisplay(
+            error: error,
+            title: 'Failed to load trips',
+            onRetry: () => ref.invalidate(tripListNotifierProvider),
+          ),
+          data: (trips) {
+            if (trips.isEmpty) {
+              return const ResponsiveEmptyState(
+                title: 'No trips yet',
+                message: 'Create your first trip to get started',
+                icon: Icons.luggage_outlined,
+              );
+            }
 
-                  return _ResponsiveTripsList(trips: trips);
-                },
-              ),
-            ),
-          ],
+            return _ResponsiveTripsList(trips: trips);
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(

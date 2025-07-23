@@ -39,7 +39,7 @@ class AuthNotifier extends _$AuthNotifier {
       final authRepository = ref.read(authRepositoryProvider);
       await authRepository.signInWithGoogle();
       // State will be updated automatically through authStateProvider
-    } catch (error, stackTrace) {
+    } catch (error) {
       final appError = _handleAuthError(error);
       // Notify global error handler
       ref.read(errorNotifierProvider.notifier).showError(appError);
@@ -53,7 +53,7 @@ class AuthNotifier extends _$AuthNotifier {
       final authRepository = ref.read(authRepositoryProvider);
       await authRepository.signInWithApple();
       // State will be updated automatically through authStateProvider
-    } catch (error, stackTrace) {
+    } catch (error) {
       final appError = _handleAuthError(error);
       // Notify global error handler
       ref.read(errorNotifierProvider.notifier).showError(appError);
@@ -67,7 +67,7 @@ class AuthNotifier extends _$AuthNotifier {
       final authRepository = ref.read(authRepositoryProvider);
       await authRepository.signOut();
       // State will be updated automatically through authStateProvider
-    } catch (error, stackTrace) {
+    } catch (error) {
       final appError = _handleAuthError(error);
       // Notify global error handler
       ref.read(errorNotifierProvider.notifier).showError(appError);
@@ -80,11 +80,11 @@ class AuthNotifier extends _$AuthNotifier {
   /// Helper method to convert exceptions to AppError
   AppError _handleAuthError(Object error) {
     if (error.toString().contains('network')) {
-      return AppError.network('Network error during authentication. Please check your connection.');
+      return const AppError.network('Network error during authentication. Please check your connection.');
     } else if (error.toString().contains('cancelled')) {
-      return AppError.authentication('Authentication was cancelled.');
+      return const AppError.authentication('Authentication was cancelled.');
     } else {
-      return AppError.authentication('Authentication failed. Please try again.');
+      return const AppError.authentication('Authentication failed. Please try again.');
     }
   }
 }
@@ -113,5 +113,54 @@ class ErrorNotifier extends _$ErrorNotifier {
         state = null;
       }
     });
+  }
+}
+
+/// Provider for global success messages
+@riverpod
+class SuccessNotifier extends _$SuccessNotifier {
+  @override
+  String? build() => null;
+  
+  /// Show a success message globally
+  void showSuccess(String message) {
+    state = message;
+  }
+  
+  /// Clear the current success message
+  void clearSuccess() {
+    state = null;
+  }
+  
+  /// Auto-clear success message after a delay
+  void showSuccessWithAutoClear(String message, {Duration delay = const Duration(seconds: 3)}) {
+    state = message;
+    Future.delayed(delay, () {
+      if (ref.mounted && state == message) {
+        state = null;
+      }
+    });
+  }
+}
+
+/// Provider for global loading state
+@riverpod
+class LoadingNotifier extends _$LoadingNotifier {
+  @override
+  bool build() => false;
+  
+  /// Set loading state
+  void setLoading(bool isLoading) {
+    state = isLoading;
+  }
+  
+  /// Show loading with message
+  void showLoading() {
+    state = true;
+  }
+  
+  /// Hide loading
+  void hideLoading() {
+    state = false;
   }
 }

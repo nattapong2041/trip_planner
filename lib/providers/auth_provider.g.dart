@@ -121,7 +121,7 @@ final class AuthNotifierProvider
   }
 }
 
-String _$authNotifierHash() => r'0898e26c6d420b4abffb7ef2356337e4421fd530';
+String _$authNotifierHash() => r'50e1041fc0e99d89f8ed832a297003a61a46acf7';
 
 abstract class _$AuthNotifier extends $Notifier<AsyncValue<User?>> {
   AsyncValue<User?> build();
@@ -185,6 +185,106 @@ abstract class _$ErrorNotifier extends $Notifier<AppError?> {
     final ref = this.ref as $Ref<AppError?, AppError?>;
     final element = ref.element as $ClassProviderElement<
         AnyNotifier<AppError?, AppError?>, AppError?, Object?, Object?>;
+    element.handleValue(ref, created);
+  }
+}
+
+/// Provider for global success messages
+@ProviderFor(SuccessNotifier)
+const successNotifierProvider = SuccessNotifierProvider._();
+
+/// Provider for global success messages
+final class SuccessNotifierProvider
+    extends $NotifierProvider<SuccessNotifier, String?> {
+  /// Provider for global success messages
+  const SuccessNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'successNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$successNotifierHash();
+
+  @$internal
+  @override
+  SuccessNotifier create() => SuccessNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(String? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<String?>(value),
+    );
+  }
+}
+
+String _$successNotifierHash() => r'5f5f61a71f05174270788935c044960a070dc93d';
+
+abstract class _$SuccessNotifier extends $Notifier<String?> {
+  String? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<String?, String?>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<String?, String?>, String?, Object?, Object?>;
+    element.handleValue(ref, created);
+  }
+}
+
+/// Provider for global loading state
+@ProviderFor(LoadingNotifier)
+const loadingNotifierProvider = LoadingNotifierProvider._();
+
+/// Provider for global loading state
+final class LoadingNotifierProvider
+    extends $NotifierProvider<LoadingNotifier, bool> {
+  /// Provider for global loading state
+  const LoadingNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'loadingNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$loadingNotifierHash();
+
+  @$internal
+  @override
+  LoadingNotifier create() => LoadingNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(bool value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<bool>(value),
+    );
+  }
+}
+
+String _$loadingNotifierHash() => r'f8b178711b3ba5752870d316da925cd0dac70e83';
+
+abstract class _$LoadingNotifier extends $Notifier<bool> {
+  bool build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<bool, bool>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<bool, bool>, bool, Object?, Object?>;
     element.handleValue(ref, created);
   }
 }

@@ -59,7 +59,10 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       
       await activityRepository.createActivity(newActivity);
       // The stream will automatically update with the new activity
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Activity created successfully!');
+    } catch (error) {
       final appError = _handleActivityError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -72,7 +75,10 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       final activityRepository = ref.read(activityRepositoryProvider);
       await activityRepository.updateActivity(activity);
       // The stream will automatically update with the changes
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Activity updated successfully!');
+    } catch (error) {
       final appError = _handleActivityError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -85,7 +91,10 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       final activityRepository = ref.read(activityRepositoryProvider);
       await activityRepository.deleteActivity(activityId);
       // The stream will automatically update with the removal
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Activity deleted successfully!');
+    } catch (error) {
       final appError = _handleActivityError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -108,7 +117,10 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       );
       
       await activityRepository.updateActivity(updatedActivity);
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Activity assigned to day successfully!');
+    } catch (error) {
       final appError = _handleActivityError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -131,7 +143,10 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       );
       
       await activityRepository.updateActivity(updatedActivity);
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Activity moved to pool successfully!');
+    } catch (error) {
       final appError = _handleActivityError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -152,7 +167,10 @@ class ActivityListNotifier extends _$ActivityListNotifier {
         );
         await activityRepository.updateActivity(updatedActivity);
       }
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Activities reordered successfully!');
+    } catch (error) {
       final appError = _handleActivityError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -208,7 +226,10 @@ class ActivityListNotifier extends _$ActivityListNotifier {
         final reorderedActivity = activityToUpdate.copyWith(dayOrder: i + 1);
         await activityRepository.updateActivity(reorderedActivity);
       }
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Activity moved successfully!');
+    } catch (error) {
       final appError = _handleActivityError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -233,7 +254,10 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       
       await activityRepository.addBrainstormIdea(activityId, brainstormIdea);
       // The stream will automatically update with the new brainstorm idea
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Brainstorm idea added successfully!');
+    } catch (error) {
       final appError = _handleActivityError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -246,7 +270,10 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       final activityRepository = ref.read(activityRepositoryProvider);
       await activityRepository.removeBrainstormIdea(activityId, ideaId);
       // The stream will automatically update with the removal
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Brainstorm idea removed successfully!');
+    } catch (error) {
       final appError = _handleActivityError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -256,13 +283,13 @@ class ActivityListNotifier extends _$ActivityListNotifier {
   /// Helper method to convert exceptions to AppError
   AppError _handleActivityError(Object error) {
     if (error.toString().contains('network')) {
-      return AppError.network('Network error while managing activities. Please check your connection.');
+      return const AppError.network('Network error while managing activities. Please check your connection.');
     } else if (error.toString().contains('permission')) {
-      return AppError.permission('You do not have permission to perform this action.');
+      return const AppError.permission('You do not have permission to perform this action.');
     } else if (error.toString().contains('not found')) {
-      return AppError.validation('Activity not found or no longer exists.');
+      return const AppError.validation('Activity not found or no longer exists.');
     } else {
-      return AppError.unknown('An error occurred while managing activities. Please try again.');
+      return const AppError.unknown('An error occurred while managing activities. Please try again.');
     }
   }
 }
@@ -275,8 +302,8 @@ class ActivityDetailNotifier extends _$ActivityDetailNotifier {
     try {
       final activityRepository = ref.read(activityRepositoryProvider);
       return await activityRepository.getActivityById(activityId);
-    } catch (error, stackTrace) {
-      final appError = AppError.unknown('Failed to load activity details.');
+    } catch (error) {
+      final appError = const AppError.unknown('Failed to load activity details.');
       ref.read(errorNotifierProvider.notifier).showError(appError);
       throw appError;
     }

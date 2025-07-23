@@ -68,7 +68,10 @@ class TripListNotifier extends _$TripListNotifier {
       
       await tripRepository.createTrip(newTrip);
       // The stream will automatically update with the new trip
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Trip created successfully!');
+    } catch (error) {
       final appError = _handleTripError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -82,7 +85,10 @@ class TripListNotifier extends _$TripListNotifier {
       final updatedTrip = trip.copyWith(updatedAt: DateTime.now());
       await tripRepository.updateTrip(updatedTrip);
       // The stream will automatically update with the changes
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Trip updated successfully!');
+    } catch (error) {
       final appError = _handleTripError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -95,7 +101,10 @@ class TripListNotifier extends _$TripListNotifier {
       final tripRepository = ref.read(tripRepositoryProvider);
       await tripRepository.deleteTrip(tripId);
       // The stream will automatically update with the removal
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Trip deleted successfully!');
+    } catch (error) {
       final appError = _handleTripError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -108,7 +117,10 @@ class TripListNotifier extends _$TripListNotifier {
       final tripRepository = ref.read(tripRepositoryProvider);
       await tripRepository.addCollaborator(tripId, email);
       // The stream will automatically update with the new collaborator
-    } catch (error, stackTrace) {
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Collaborator added successfully!');
+    } catch (error) {
       final appError = _handleTripError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       rethrow;
@@ -118,13 +130,13 @@ class TripListNotifier extends _$TripListNotifier {
   /// Helper method to convert exceptions to AppError
   AppError _handleTripError(Object error) {
     if (error.toString().contains('network')) {
-      return AppError.network('Network error while managing trips. Please check your connection.');
+      return const AppError.network('Network error while managing trips. Please check your connection.');
     } else if (error.toString().contains('permission')) {
-      return AppError.permission('You do not have permission to perform this action.');
+      return const AppError.permission('You do not have permission to perform this action.');
     } else if (error.toString().contains('not found')) {
-      return AppError.validation('Trip not found or no longer exists.');
+      return const AppError.validation('Trip not found or no longer exists.');
     } else {
-      return AppError.unknown('An error occurred while managing trips. Please try again.');
+      return const AppError.unknown('An error occurred while managing trips. Please try again.');
     }
   }
 }
@@ -137,8 +149,8 @@ class TripDetailNotifier extends _$TripDetailNotifier {
     try {
       final tripRepository = ref.read(tripRepositoryProvider);
       return await tripRepository.getTripById(tripId);
-    } catch (error, stackTrace) {
-      final appError = AppError.unknown('Failed to load trip details.');
+    } catch (error) {
+      final appError = const AppError.unknown('Failed to load trip details.');
       ref.read(errorNotifierProvider.notifier).showError(appError);
       throw appError;
     }

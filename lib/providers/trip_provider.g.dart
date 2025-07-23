@@ -77,7 +77,7 @@ final class TripListNotifierProvider
   TripListNotifier create() => TripListNotifier();
 }
 
-String _$tripListNotifierHash() => r'3b5e43f9fee16176811f98e1ff11df6486a4c45c';
+String _$tripListNotifierHash() => r'b72d2cdf5760a29ecd0f524d78567649752bb214';
 
 abstract class _$TripListNotifier extends $StreamNotifier<List<Trip>> {
   Stream<List<Trip>> build();
@@ -140,7 +140,7 @@ final class TripDetailNotifierProvider
 }
 
 String _$tripDetailNotifierHash() =>
-    r'eddec880557c2c22d93fa9d3599005fd9f2a2239';
+    r'9d5dc4991b45cf10d336db507fe5e3de66c6f94c';
 
 /// Provider for getting a single trip by ID
 final class TripDetailNotifierFamily extends $Family

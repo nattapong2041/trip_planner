@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/responsive.dart';
-import '../../utils/responsive_gestures.dart';
 import '../../widgets/common/responsive_error_display.dart';
+import '../../widgets/common/loading_button.dart';
 
 class AuthScreen extends ConsumerWidget {
   const AuthScreen({super.key});
@@ -176,49 +176,51 @@ class AuthScreen extends ConsumerWidget {
   }
 
   Widget _buildAuthButtons(BuildContext context, WidgetRef ref, AsyncValue authState) {
-    if (authState.isLoading) {
-      return const ResponsiveLoadingIndicator(message: 'Authenticating...');
-    }
+    final isLoading = authState.isLoading;
 
     return Column(
       children: [
         SizedBox(
           width: double.infinity,
           height: 48,
-          child: ElevatedButton.icon(
+          child: LoadingButton(
             onPressed: () async {
               await ref.read(authNotifierProvider.notifier).signInWithGoogle();
             },
+            isLoading: isLoading,
+            loadingText: 'Signing in...',
             icon: Icon(
               Icons.login,
               size: Responsive.getIconSize(context, baseSize: 20),
             ),
-            label: const Text('Sign in with Google'),
             style: ElevatedButton.styleFrom(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
+            child: const Text('Sign in with Google'),
           ),
         ),
         SizedBox(height: Responsive.getSpacing(context)),
         SizedBox(
           width: double.infinity,
           height: 48,
-          child: ElevatedButton.icon(
+          child: LoadingButton(
             onPressed: () async {
               await ref.read(authNotifierProvider.notifier).signInWithApple();
             },
+            isLoading: isLoading,
+            loadingText: 'Signing in...',
             icon: Icon(
               Icons.apple,
               size: Responsive.getIconSize(context, baseSize: 20),
             ),
-            label: const Text('Sign in with Apple'),
             style: ElevatedButton.styleFrom(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
+            child: const Text('Sign in with Apple'),
           ),
         ),
         if (authState.hasError) ...[

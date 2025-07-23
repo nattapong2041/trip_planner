@@ -1,7 +1,7 @@
 /// Central export file for all Riverpod providers
 /// This file provides a single import point for all state management providers
 
-// Auth providers
+// Auth providers (includes error, success, and loading notifiers)
 export 'auth_provider.dart';
 
 // Trip providers  

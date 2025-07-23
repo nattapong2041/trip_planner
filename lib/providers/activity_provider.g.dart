@@ -98,7 +98,7 @@ final class ActivityListNotifierProvider
 }
 
 String _$activityListNotifierHash() =>
-    r'5b5ece82b3a5aeb95c97e25a5d180f9ddfb2017b';
+    r'3f99da45b45703cf4afa4b45dea77f5988a28bd5';
 
 /// Notifier for managing activities for a specific trip
 final class ActivityListNotifierFamily extends $Family
@@ -193,7 +193,7 @@ final class ActivityDetailNotifierProvider
 }
 
 String _$activityDetailNotifierHash() =>
-    r'dccec235726fe973e88affe82569688d628f0144';
+    r'6d21046b2dc4720149966b1bc4d419c755b85614';
 
 /// Provider for getting a single activity by ID
 final class ActivityDetailNotifierFamily extends $Family

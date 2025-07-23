@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/activity_provider.dart';
+import '../../utils/responsive.dart';
+import '../../utils/responsive_gestures.dart';
+import '../../widgets/common/responsive_error_display.dart';
 
 class ActivityCreateScreen extends ConsumerStatefulWidget {
   const ActivityCreateScreen({
@@ -58,150 +61,293 @@ class _ActivityCreateScreenState extends ConsumerState<ActivityCreateScreen> {
       appBar: AppBar(
         title: const Text('Add Activity'),
         actions: [
-          TextButton(
-            onPressed: _isLoading ? null : _saveActivity,
-            child: _isLoading
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Text('Save'),
-          ),
+          if (Responsive.isLargeScreen(context))
+            ElevatedButton.icon(
+              onPressed: _isLoading ? null : _saveActivity,
+              icon: _isLoading
+                  ? SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Theme.of(context).colorScheme.onPrimary,
+                      ),
+                    )
+                  : const Icon(Icons.save),
+              label: const Text('Save Activity'),
+            )
+          else
+            TextButton(
+              onPressed: _isLoading ? null : _saveActivity,
+              child: _isLoading
+                  ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save'),
+            ),
         ],
       ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            // Place field
-            TextFormField(
-              controller: _placeController,
-              decoration: const InputDecoration(
-                labelText: 'Place *',
-                hintText: 'e.g., Central Park, Eiffel Tower',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.place),
-              ),
-              textInputAction: TextInputAction.next,
-              enabled: !_isLoading,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a place name';
-                }
-                if (value.trim().length < 2) {
-                  return 'Place name must be at least 2 characters';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            
-            // Activity Type field with dropdown suggestions
-            TextFormField(
-              controller: _activityTypeController,
-              decoration: InputDecoration(
-                labelText: 'Activity Type *',
-                hintText: 'e.g., Restaurant, Museum, Park',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.category),
-                suffixIcon: PopupMenuButton<String>(
-                  icon: const Icon(Icons.arrow_drop_down),
-                  onSelected: (String value) {
-                    _activityTypeController.text = value;
-                  },
-                  itemBuilder: (BuildContext context) {
-                    return _activityTypes.map((String type) {
-                      return PopupMenuItem<String>(
-                        value: type,
-                        child: Text(type),
-                      );
-                    }).toList();
-                  },
+      body: ResponsiveContainer(
+        child: ResponsiveBuilder(
+          mobile: _buildMobileLayout(context),
+          tablet: _buildTabletLayout(context),
+          desktop: _buildDesktopLayout(context),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout(BuildContext context) {
+    return Form(
+      key: _formKey,
+      child: ListView(
+        padding: EdgeInsets.all(Responsive.getSpacing(context)),
+        children: [
+          _buildFormFields(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabletLayout(BuildContext context) {
+    return Center(
+      child: Card(
+        margin: EdgeInsets.all(Responsive.getSpacing(context)),
+        child: Container(
+          width: Responsive.getDialogWidth(context),
+          padding: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 24.0)),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.add_location,
+                  size: Responsive.getIconSize(context, baseSize: 48),
+                  color: Theme.of(context).colorScheme.primary,
                 ),
-              ),
-              textInputAction: TextInputAction.next,
-              enabled: !_isLoading,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter an activity type';
-                }
-                if (value.trim().length < 2) {
-                  return 'Activity type must be at least 2 characters';
-                }
-                return null;
-              },
+                SizedBox(height: Responsive.getSpacing(context)),
+                Text(
+                  'Add New Activity',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                SizedBox(height: Responsive.getSpacing(context, baseSpacing: 24.0)),
+                _buildFormFields(context),
+              ],
             ),
-            const SizedBox(height: 16),
-            
-            // Price field (optional)
-            TextFormField(
-              controller: _priceController,
-              decoration: const InputDecoration(
-                labelText: 'Price (optional)',
-                hintText: 'e.g., \$25, Free, €15-20',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.attach_money),
-              ),
-              textInputAction: TextInputAction.next,
-              enabled: !_isLoading,
-            ),
-            const SizedBox(height: 16),
-            
-            // Notes field (optional)
-            TextFormField(
-              controller: _notesController,
-              decoration: const InputDecoration(
-                labelText: 'Notes (optional)',
-                hintText: 'Additional details, opening hours, etc.',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.notes),
-              ),
-              maxLines: 3,
-              textInputAction: TextInputAction.done,
-              enabled: !_isLoading,
-              onFieldSubmitted: (_) => _saveActivity(),
-            ),
-            const SizedBox(height: 24),
-            
-            // Info card
-            Card(
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout(BuildContext context) {
+    return Row(
+      children: [
+        // Left side - Hero section
+        Expanded(
+          flex: 2,
+          child: Container(
+            color: Theme.of(context).colorScheme.primaryContainer,
+            child: Center(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 48.0)),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Activity Pool',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                    Icon(
+                      Icons.add_location,
+                      size: Responsive.getIconSize(context, baseSize: 80),
+                      color: Theme.of(context).colorScheme.onPrimaryContainer,
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: Responsive.getSpacing(context, baseSpacing: 24.0)),
                     Text(
-                      'New activities are added to the activity pool. You can assign them to specific days later from the trip details page.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
+                      'Add Activity',
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
                       ),
+                      textAlign: TextAlign.center,
+                    ),
+                    SizedBox(height: Responsive.getSpacing(context)),
+                    Text(
+                      'Create a new activity for your trip',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ],
                 ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+        
+        // Right side - Form
+        Expanded(
+          flex: 3,
+          child: Center(
+            child: Container(
+              width: 500,
+              padding: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 48.0)),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      'Activity Details',
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: Responsive.getSpacing(context, baseSpacing: 32.0)),
+                    _buildFormFields(context),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormFields(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Place field
+        TextFormField(
+          controller: _placeController,
+          decoration: const InputDecoration(
+            labelText: 'Place *',
+            hintText: 'e.g., Central Park, Eiffel Tower',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.place),
+          ),
+          textInputAction: TextInputAction.next,
+          enabled: !_isLoading,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter a place name';
+            }
+            if (value.trim().length < 2) {
+              return 'Place name must be at least 2 characters';
+            }
+            return null;
+          },
+        ),
+        SizedBox(height: Responsive.getSpacing(context)),
+        
+        // Activity Type field with dropdown suggestions
+        TextFormField(
+          controller: _activityTypeController,
+          decoration: InputDecoration(
+            labelText: 'Activity Type *',
+            hintText: 'e.g., Restaurant, Museum, Park',
+            border: const OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.category),
+            suffixIcon: PopupMenuButton<String>(
+              icon: const Icon(Icons.arrow_drop_down),
+              onSelected: (String value) {
+                _activityTypeController.text = value;
+              },
+              itemBuilder: (BuildContext context) {
+                return _activityTypes.map((String type) {
+                  return PopupMenuItem<String>(
+                    value: type,
+                    child: Text(type),
+                  );
+                }).toList();
+              },
+            ),
+          ),
+          textInputAction: TextInputAction.next,
+          enabled: !_isLoading,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Please enter an activity type';
+            }
+            if (value.trim().length < 2) {
+              return 'Activity type must be at least 2 characters';
+            }
+            return null;
+          },
+        ),
+        SizedBox(height: Responsive.getSpacing(context)),
+        
+        // Price field (optional)
+        TextFormField(
+          controller: _priceController,
+          decoration: const InputDecoration(
+            labelText: 'Price (optional)',
+            hintText: 'e.g., \$25, Free, €15-20',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.attach_money),
+          ),
+          textInputAction: TextInputAction.next,
+          enabled: !_isLoading,
+        ),
+        SizedBox(height: Responsive.getSpacing(context)),
+        
+        // Notes field (optional)
+        TextFormField(
+          controller: _notesController,
+          decoration: const InputDecoration(
+            labelText: 'Notes (optional)',
+            hintText: 'Additional details, opening hours, etc.',
+            border: OutlineInputBorder(),
+            prefixIcon: Icon(Icons.notes),
+          ),
+          maxLines: 3,
+          textInputAction: TextInputAction.done,
+          enabled: !_isLoading,
+          onFieldSubmitted: (_) => _saveActivity(),
+        ),
+        SizedBox(height: Responsive.getSpacing(context, baseSpacing: 24.0)),
+        
+        // Info card
+        Container(
+          padding: EdgeInsets.all(Responsive.getSpacing(context)),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8.0),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: Theme.of(context).colorScheme.primary,
+                    size: Responsive.getIconSize(context, baseSize: 20),
+                  ),
+                  SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
+                  Text(
+                    'Activity Pool',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
+              Text(
+                'New activities are added to the activity pool. You can assign them to specific days later from the trip details page.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 

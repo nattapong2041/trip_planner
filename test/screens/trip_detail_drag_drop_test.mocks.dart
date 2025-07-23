@@ -3,14 +3,16 @@
 // Do not manually edit this file.
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'dart:async' as _i5;
+import 'dart:async' as _i6;
 
 import 'package:mockito/mockito.dart' as _i1;
-import 'package:trip_planner/models/activity.dart' as _i3;
-import 'package:trip_planner/models/brainstorm_idea.dart' as _i7;
-import 'package:trip_planner/models/trip.dart' as _i2;
-import 'package:trip_planner/repositories/activity_repository.dart' as _i6;
-import 'package:trip_planner/repositories/trip_repository.dart' as _i4;
+import 'package:mockito/src/dummies.dart' as _i3;
+import 'package:riverpod_annotation/riverpod_annotation.dart' as _i4;
+import 'package:state_notifier/state_notifier.dart' as _i7;
+import 'package:trip_planner/models/activity.dart' as _i9;
+import 'package:trip_planner/models/trip.dart' as _i5;
+import 'package:trip_planner/providers/activity_provider.dart' as _i8;
+import 'package:trip_planner/providers/trip_provider.dart' as _i2;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -26,199 +28,331 @@ import 'package:trip_planner/repositories/trip_repository.dart' as _i4;
 // ignore_for_file: camel_case_types
 // ignore_for_file: subtype_of_sealed_class
 
-class _FakeTrip_0 extends _i1.SmartFake implements _i2.Trip {
-  _FakeTrip_0(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
-}
-
-class _FakeActivity_1 extends _i1.SmartFake implements _i3.Activity {
-  _FakeActivity_1(
-    Object parent,
-    Invocation parentInvocation,
-  ) : super(
-          parent,
-          parentInvocation,
-        );
-}
-
-/// A class which mocks [TripRepository].
+/// A class which mocks [TripDetailNotifier].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockTripRepository extends _i1.Mock implements _i4.TripRepository {
-  MockTripRepository() {
+class MockTripDetailNotifier extends _i1.Mock
+    implements _i2.TripDetailNotifier {
+  MockTripDetailNotifier() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Stream<List<_i2.Trip>> getUserTrips(String? userId) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getUserTrips,
-          [userId],
-        ),
-        returnValue: _i5.Stream<List<_i2.Trip>>.empty(),
-      ) as _i5.Stream<List<_i2.Trip>>);
-
-  @override
-  _i5.Future<_i2.Trip> createTrip(_i2.Trip? trip) => (super.noSuchMethod(
-        Invocation.method(
-          #createTrip,
-          [trip],
-        ),
-        returnValue: _i5.Future<_i2.Trip>.value(_FakeTrip_0(
+  String get tripId => (super.noSuchMethod(
+        Invocation.getter(#tripId),
+        returnValue: _i3.dummyValue<String>(
           this,
-          Invocation.method(
-            #createTrip,
-            [trip],
-          ),
-        )),
-      ) as _i5.Future<_i2.Trip>);
-
-  @override
-  _i5.Future<_i2.Trip> updateTrip(_i2.Trip? trip) => (super.noSuchMethod(
-        Invocation.method(
-          #updateTrip,
-          [trip],
+          Invocation.getter(#tripId),
         ),
-        returnValue: _i5.Future<_i2.Trip>.value(_FakeTrip_0(
-          this,
-          Invocation.method(
-            #updateTrip,
-            [trip],
-          ),
-        )),
-      ) as _i5.Future<_i2.Trip>);
+      ) as String);
 
   @override
-  _i5.Future<void> deleteTrip(String? tripId) => (super.noSuchMethod(
+  _i4.Ref get ref => (super.noSuchMethod(
+        Invocation.getter(#ref),
+        returnValue: _i3.dummyValue<_i4.Ref>(
+          this,
+          Invocation.getter(#ref),
+        ),
+      ) as _i4.Ref);
+
+  @override
+  _i4.AsyncValue<_i5.Trip?> get state => (super.noSuchMethod(
+        Invocation.getter(#state),
+        returnValue: _i3.dummyValue<_i4.AsyncValue<_i5.Trip?>>(
+          this,
+          Invocation.getter(#state),
+        ),
+      ) as _i4.AsyncValue<_i5.Trip?>);
+
+  @override
+  set state(_i4.AsyncValue<_i5.Trip?>? newState) => super.noSuchMethod(
+        Invocation.setter(
+          #state,
+          newState,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i6.Future<_i5.Trip?> get future => (super.noSuchMethod(
+        Invocation.getter(#future),
+        returnValue: _i6.Future<_i5.Trip?>.value(),
+      ) as _i6.Future<_i5.Trip?>);
+
+  @override
+  _i6.Future<_i5.Trip?> build(String? tripId) => (super.noSuchMethod(
         Invocation.method(
-          #deleteTrip,
+          #build,
           [tripId],
         ),
-        returnValue: _i5.Future<void>.value(),
-        returnValueForMissingStub: _i5.Future<void>.value(),
-      ) as _i5.Future<void>);
+        returnValue: _i6.Future<_i5.Trip?>.value(),
+      ) as _i6.Future<_i5.Trip?>);
 
   @override
-  _i5.Future<void> addCollaborator(
-    String? tripId,
-    String? email,
+  _i6.Future<void> refresh() => (super.noSuchMethod(
+        Invocation.method(
+          #refresh,
+          [],
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
+
+  @override
+  void runBuild() => super.noSuchMethod(
+        Invocation.method(
+          #runBuild,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i7.RemoveListener listenSelf(
+    void Function(
+      _i4.AsyncValue<_i5.Trip?>?,
+      _i4.AsyncValue<_i5.Trip?>,
+    )? listener, {
+    void Function(
+      Object,
+      StackTrace,
+    )? onError,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #listenSelf,
+          [listener],
+          {#onError: onError},
+        ),
+        returnValue: () {},
+      ) as _i7.RemoveListener);
+
+  @override
+  bool updateShouldNotify(
+    _i4.AsyncValue<_i5.Trip?>? previous,
+    _i4.AsyncValue<_i5.Trip?>? next,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
-          #addCollaborator,
+          #updateShouldNotify,
           [
-            tripId,
-            email,
+            previous,
+            next,
           ],
         ),
-        returnValue: _i5.Future<void>.value(),
-        returnValueForMissingStub: _i5.Future<void>.value(),
-      ) as _i5.Future<void>);
+        returnValue: false,
+      ) as bool);
 
   @override
-  _i5.Future<_i2.Trip?> getTripById(String? tripId) => (super.noSuchMethod(
+  _i6.Future<_i5.Trip?> update(
+    _i6.FutureOr<_i5.Trip?> Function(_i5.Trip?)? cb, {
+    _i6.FutureOr<_i5.Trip?> Function(
+      Object,
+      StackTrace,
+    )? onError,
+  }) =>
+      (super.noSuchMethod(
         Invocation.method(
-          #getTripById,
-          [tripId],
+          #update,
+          [cb],
+          {#onError: onError},
         ),
-        returnValue: _i5.Future<_i2.Trip?>.value(),
-      ) as _i5.Future<_i2.Trip?>);
+        returnValue: _i6.Future<_i5.Trip?>.value(),
+      ) as _i6.Future<_i5.Trip?>);
 }
 
-/// A class which mocks [ActivityRepository].
+/// A class which mocks [ActivityListNotifier].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockActivityRepository extends _i1.Mock
-    implements _i6.ActivityRepository {
-  MockActivityRepository() {
+class MockActivityListNotifier extends _i1.Mock
+    implements _i8.ActivityListNotifier {
+  MockActivityListNotifier() {
     _i1.throwOnMissingStub(this);
   }
 
   @override
-  _i5.Stream<List<_i3.Activity>> getTripActivities(String? tripId) =>
-      (super.noSuchMethod(
-        Invocation.method(
-          #getTripActivities,
-          [tripId],
+  String get tripId => (super.noSuchMethod(
+        Invocation.getter(#tripId),
+        returnValue: _i3.dummyValue<String>(
+          this,
+          Invocation.getter(#tripId),
         ),
-        returnValue: _i5.Stream<List<_i3.Activity>>.empty(),
-      ) as _i5.Stream<List<_i3.Activity>>);
+      ) as String);
 
   @override
-  _i5.Future<_i3.Activity> createActivity(_i3.Activity? activity) =>
+  _i4.Ref get ref => (super.noSuchMethod(
+        Invocation.getter(#ref),
+        returnValue: _i3.dummyValue<_i4.Ref>(
+          this,
+          Invocation.getter(#ref),
+        ),
+      ) as _i4.Ref);
+
+  @override
+  _i4.AsyncValue<List<_i9.Activity>> get state => (super.noSuchMethod(
+        Invocation.getter(#state),
+        returnValue: _i3.dummyValue<_i4.AsyncValue<List<_i9.Activity>>>(
+          this,
+          Invocation.getter(#state),
+        ),
+      ) as _i4.AsyncValue<List<_i9.Activity>>);
+
+  @override
+  set state(_i4.AsyncValue<List<_i9.Activity>>? newState) => super.noSuchMethod(
+        Invocation.setter(
+          #state,
+          newState,
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i6.Future<List<_i9.Activity>> get future => (super.noSuchMethod(
+        Invocation.getter(#future),
+        returnValue: _i6.Future<List<_i9.Activity>>.value(<_i9.Activity>[]),
+      ) as _i6.Future<List<_i9.Activity>>);
+
+  @override
+  _i6.Stream<List<_i9.Activity>> build(String? tripId) => (super.noSuchMethod(
+        Invocation.method(
+          #build,
+          [tripId],
+        ),
+        returnValue: _i6.Stream<List<_i9.Activity>>.empty(),
+      ) as _i6.Stream<List<_i9.Activity>>);
+
+  @override
+  _i6.Future<void> createActivity({
+    required String? tripId,
+    required String? place,
+    required String? activityType,
+    String? price,
+    String? notes,
+  }) =>
       (super.noSuchMethod(
         Invocation.method(
           #createActivity,
-          [activity],
+          [],
+          {
+            #tripId: tripId,
+            #place: place,
+            #activityType: activityType,
+            #price: price,
+            #notes: notes,
+          },
         ),
-        returnValue: _i5.Future<_i3.Activity>.value(_FakeActivity_1(
-          this,
-          Invocation.method(
-            #createActivity,
-            [activity],
-          ),
-        )),
-      ) as _i5.Future<_i3.Activity>);
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
 
   @override
-  _i5.Future<_i3.Activity> updateActivity(_i3.Activity? activity) =>
+  _i6.Future<void> updateActivity(_i9.Activity? activity) =>
       (super.noSuchMethod(
         Invocation.method(
           #updateActivity,
           [activity],
         ),
-        returnValue: _i5.Future<_i3.Activity>.value(_FakeActivity_1(
-          this,
-          Invocation.method(
-            #updateActivity,
-            [activity],
-          ),
-        )),
-      ) as _i5.Future<_i3.Activity>);
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
 
   @override
-  _i5.Future<void> deleteActivity(String? activityId) => (super.noSuchMethod(
+  _i6.Future<void> deleteActivity(String? activityId) => (super.noSuchMethod(
         Invocation.method(
           #deleteActivity,
           [activityId],
         ),
-        returnValue: _i5.Future<void>.value(),
-        returnValueForMissingStub: _i5.Future<void>.value(),
-      ) as _i5.Future<void>);
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
 
   @override
-  _i5.Future<_i3.Activity> addBrainstormIdea(
+  _i6.Future<void> assignActivityToDay(
     String? activityId,
-    _i7.BrainstormIdea? idea,
+    String? day,
+    int? dayOrder,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #assignActivityToDay,
+          [
+            activityId,
+            day,
+            dayOrder,
+          ],
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> moveActivityToPool(String? activityId) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #moveActivityToPool,
+          [activityId],
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> reorderActivitiesInDay(
+    String? day,
+    List<_i9.Activity>? reorderedActivities,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #reorderActivitiesInDay,
+          [
+            day,
+            reorderedActivities,
+          ],
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> moveActivityBetweenDays(
+    String? activityId,
+    String? fromDay,
+    String? toDay,
+    int? newOrder,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #moveActivityBetweenDays,
+          [
+            activityId,
+            fromDay,
+            toDay,
+            newOrder,
+          ],
+        ),
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
+
+  @override
+  _i6.Future<void> addBrainstormIdea(
+    String? activityId,
+    String? description,
   ) =>
       (super.noSuchMethod(
         Invocation.method(
           #addBrainstormIdea,
           [
             activityId,
-            idea,
+            description,
           ],
         ),
-        returnValue: _i5.Future<_i3.Activity>.value(_FakeActivity_1(
-          this,
-          Invocation.method(
-            #addBrainstormIdea,
-            [
-              activityId,
-              idea,
-            ],
-          ),
-        )),
-      ) as _i5.Future<_i3.Activity>);
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
 
   @override
-  _i5.Future<_i3.Activity> removeBrainstormIdea(
+  _i6.Future<void> removeBrainstormIdea(
     String? activityId,
     String? ideaId,
   ) =>
@@ -230,25 +364,69 @@ class MockActivityRepository extends _i1.Mock
             ideaId,
           ],
         ),
-        returnValue: _i5.Future<_i3.Activity>.value(_FakeActivity_1(
-          this,
-          Invocation.method(
-            #removeBrainstormIdea,
-            [
-              activityId,
-              ideaId,
-            ],
-          ),
-        )),
-      ) as _i5.Future<_i3.Activity>);
+        returnValue: _i6.Future<void>.value(),
+        returnValueForMissingStub: _i6.Future<void>.value(),
+      ) as _i6.Future<void>);
 
   @override
-  _i5.Future<_i3.Activity?> getActivityById(String? activityId) =>
+  void runBuild() => super.noSuchMethod(
+        Invocation.method(
+          #runBuild,
+          [],
+        ),
+        returnValueForMissingStub: null,
+      );
+
+  @override
+  _i7.RemoveListener listenSelf(
+    void Function(
+      _i4.AsyncValue<List<_i9.Activity>>?,
+      _i4.AsyncValue<List<_i9.Activity>>,
+    )? listener, {
+    void Function(
+      Object,
+      StackTrace,
+    )? onError,
+  }) =>
       (super.noSuchMethod(
         Invocation.method(
-          #getActivityById,
-          [activityId],
+          #listenSelf,
+          [listener],
+          {#onError: onError},
         ),
-        returnValue: _i5.Future<_i3.Activity?>.value(),
-      ) as _i5.Future<_i3.Activity?>);
+        returnValue: () {},
+      ) as _i7.RemoveListener);
+
+  @override
+  bool updateShouldNotify(
+    _i4.AsyncValue<List<_i9.Activity>>? previous,
+    _i4.AsyncValue<List<_i9.Activity>>? next,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateShouldNotify,
+          [
+            previous,
+            next,
+          ],
+        ),
+        returnValue: false,
+      ) as bool);
+
+  @override
+  _i6.Future<List<_i9.Activity>> update(
+    _i6.FutureOr<List<_i9.Activity>> Function(List<_i9.Activity>)? cb, {
+    _i6.FutureOr<List<_i9.Activity>> Function(
+      Object,
+      StackTrace,
+    )? onError,
+  }) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #update,
+          [cb],
+          {#onError: onError},
+        ),
+        returnValue: _i6.Future<List<_i9.Activity>>.value(<_i9.Activity>[]),
+      ) as _i6.Future<List<_i9.Activity>>);
 }

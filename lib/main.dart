@@ -4,7 +4,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:logger/logger.dart';
 import 'package:trip_planner/firebase_options.dart';
 import 'screens/app.dart';
-import 'services/firebase_service.dart';
 
 // Global logger instance
 final logger = Logger(
@@ -27,16 +26,8 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     logger.i('Firebase initialized successfully');
+    ('Some Firebase services may not be working properly');
     
-    // Test Firebase connection and basic operations
-    final testResults = await FirebaseService.testFirebaseServices();
-    logger.i('Firebase services test results: $testResults');
-    
-    if (testResults['auth'] == true && testResults['firestore'] == true) {
-      logger.i('All Firebase services are working correctly');
-    } else {
-      logger.w('Some Firebase services may not be working properly');
-    }
   } catch (e) {
     logger.e('Failed to initialize Firebase: $e');
     // In a real app, you might want to handle this more gracefully

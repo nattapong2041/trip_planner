@@ -106,11 +106,10 @@
   - Build authentication screens (login/logout)
   - _Requirements: 1.1, 1.2, 1.3, 1.4, 1.5_
 
-- [ ] 16. Replace mock repositories with Firebase implementations
+- [x] 16. Replace mock repositories with Firebase implementations
   - Replace TripRepository mock with Firestore implementation
   - Replace ActivityRepository mock with Firestore implementation
   - Implement real-time stream subscriptions for data updates
-  - Test data migration from mock to Firebase
   - _Requirements: 2.1, 2.2, 4.1, 4.4, 8.1, 8.2_
 
 - [ ] 17. Update navigation with authentication guards

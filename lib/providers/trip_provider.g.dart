@@ -48,7 +48,7 @@ final class TripRepositoryProvider
   }
 }
 
-String _$tripRepositoryHash() => r'6325dfd6dc320fa1aa5a552cc15ebaa58e32a846';
+String _$tripRepositoryHash() => r'ba6243a090330636ef6bc301f2ce2eca3344ff3a';
 
 /// Notifier for managing the list of user trips
 @ProviderFor(TripListNotifier)

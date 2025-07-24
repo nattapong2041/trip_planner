@@ -7,7 +7,9 @@
         {
             "name": "trip_planner",
             "request": "launch",
-            "type": "dart"
+            "type": "dart",
+            "args": ["-d", "chrome", "--web-port=8080", "--web-experimental-hot-reload"]
+        
         },
         {
             "name": "trip_planner (profile mode)",

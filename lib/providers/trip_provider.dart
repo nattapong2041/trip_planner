@@ -2,7 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/trip.dart';
 import '../models/app_error.dart';
 import '../repositories/trip_repository.dart';
-import '../repositories/mock_trip_repository.dart';
+import '../repositories/firebase_trip_repository.dart';
 import 'auth_provider.dart';
 
 part 'trip_provider.g.dart';
@@ -10,7 +10,7 @@ part 'trip_provider.g.dart';
 /// Provider for the TripRepository instance
 @riverpod
 TripRepository tripRepository(Ref ref) {
-  return MockTripRepository();
+  return FirebaseTripRepository();
 }
 
 /// Notifier for managing the list of user trips

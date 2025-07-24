@@ -59,30 +59,4 @@ class FirebaseService {
       return false;
     }
   }
-
-  /// Test Firebase services initialization and basic operations
-  static Future<Map<String, bool>> testFirebaseServices() async {
-    _logger.i('Starting Firebase services test...');
-    
-    final results = <String, bool>{};
-    
-    // Test Firebase Auth
-    results['auth'] = await testAuthConnection();
-    
-    // Test Firestore
-    results['firestore'] = await testFirestoreConnection();
-    
-    _logger.i('Firebase services test completed. Results: $results');
-    
-    return results;
-  }
-
-  /// Get Firebase project information
-  static Map<String, String> getFirebaseProjectInfo() {
-    return {
-      'project_id': 'trip-planner-f86bc',
-      'auth_domain': 'trip-planner-f86bc.firebaseapp.com',
-      'storage_bucket': 'trip-planner-f86bc.firebasestorage.app',
-    };
-  }
 }

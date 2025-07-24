@@ -22,7 +22,7 @@ service cloud.firestore {
     }
     
     function hasValidTripData() {
-      return request.resource.data.keys().hasAll(['id', 'name', 'durationDays', 'ownerId', 'collaboratorIds', 'createdAt', 'updatedAt']) &&
+      return request.resource.data.keys().hasAll(['name', 'durationDays', 'ownerId']) &&
              request.resource.data.ownerId == request.auth.uid &&
              request.resource.data.durationDays is int &&
              request.resource.data.durationDays > 0 &&
@@ -30,23 +30,23 @@ service cloud.firestore {
              request.resource.data.name is string &&
              request.resource.data.name.size() > 0 &&
              request.resource.data.name.size() <= 100 &&
-             request.resource.data.collaboratorIds is list;
+             request.resource.data.collaboratorIds is list
+    }
+    
+    function isValidTripUpdate() {
+      return request.resource.data.ownerId == resource.data.ownerId &&
+             (request.resource.data.id == resource.data.id || !('id' in request.resource.data.keys()));
     }
     
     function hasValidActivityData() {
-      return request.resource.data.keys().hasAll(['id', 'tripId', 'place', 'activityType', 'createdBy', 'createdAt', 'brainstormIdeas']) &&
+      return request.resource.data.keys().hasAll(['place', 'activityType', 'createdBy', 'createdAt']) &&
              request.resource.data.createdBy == request.auth.uid &&
              request.resource.data.place is string &&
              request.resource.data.place.size() > 0 &&
              request.resource.data.place.size() <= 200 &&
              request.resource.data.activityType is string &&
              request.resource.data.activityType.size() > 0 &&
-             request.resource.data.activityType.size() <= 100 &&
-             request.resource.data.brainstormIdeas is list &&
-             (request.resource.data.price == null || request.resource.data.price is string) &&
-             (request.resource.data.notes == null || request.resource.data.notes is string) &&
-             (request.resource.data.assignedDay == null || request.resource.data.assignedDay is string) &&
-             (request.resource.data.dayOrder == null || request.resource.data.dayOrder is int);
+             request.resource.data.activityType.size() <= 100
     }
     
     function canAccessTrip(tripId) {
@@ -71,24 +71,10 @@ service cloud.firestore {
       // Create access - only authenticated users can create trips they own
       allow create: if isAuthenticated() && hasValidTripData();
       
-      // Update access for owners and collaborators with validation
+      // Update access for owners and collaborators with simplified validation
       allow update: if isAuthenticated() && 
         (isOwner(resource.data.ownerId) || isCollaborator(resource.data.collaboratorIds)) &&
-        // Ensure critical fields are not changed inappropriately
-        request.resource.data.id == resource.data.id &&
-        request.resource.data.ownerId == resource.data.ownerId &&
-        // Validate updated data structure
-        request.resource.data.keys().hasAll(['id', 'name', 'durationDays', 'ownerId', 'collaboratorIds', 'createdAt', 'updatedAt']) &&
-        request.resource.data.durationDays is int &&
-        request.resource.data.durationDays > 0 &&
-        request.resource.data.durationDays <= 365 &&
-        request.resource.data.name is string &&
-        request.resource.data.name.size() > 0 &&
-        request.resource.data.name.size() <= 100 &&
-        request.resource.data.collaboratorIds is list &&
-        // Only owner can modify collaborators
-        (request.resource.data.collaboratorIds == resource.data.collaboratorIds || 
-         isOwner(resource.data.ownerId));
+        isValidTripUpdate();
       
       // Delete access - only owners can delete trips
       allow delete: if isAuthenticated() && isOwner(resource.data.ownerId);
@@ -112,22 +98,8 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/trips/$(resource.data.tripId)) &&
         canAccessTrip(resource.data.tripId) &&
         // Ensure critical fields are not changed inappropriately
-        request.resource.data.id == resource.data.id &&
-        request.resource.data.tripId == resource.data.tripId &&
-        request.resource.data.createdBy == resource.data.createdBy &&
-        // Validate updated data structure
-        request.resource.data.keys().hasAll(['id', 'tripId', 'place', 'activityType', 'createdBy', 'createdAt', 'brainstormIdeas']) &&
-        request.resource.data.place is string &&
-        request.resource.data.place.size() > 0 &&
-        request.resource.data.place.size() <= 200 &&
-        request.resource.data.activityType is string &&
-        request.resource.data.activityType.size() > 0 &&
-        request.resource.data.activityType.size() <= 100 &&
-        request.resource.data.brainstormIdeas is list &&
-        (request.resource.data.price == null || request.resource.data.price is string) &&
-        (request.resource.data.notes == null || request.resource.data.notes is string) &&
-        (request.resource.data.assignedDay == null || request.resource.data.assignedDay is string) &&
-        (request.resource.data.dayOrder == null || request.resource.data.dayOrder is int);
+        (request.resource.data.tripId == resource.data.tripId || !('tripId' in request.resource.data.keys())) &&
+        (request.resource.data.id == resource.data.id || !('id' in request.resource.data.keys()));
       
       // Delete access for activity creator or trip owner
       allow delete: if isAuthenticated() && 

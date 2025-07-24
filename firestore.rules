@@ -1,0 +1,145 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for validation and access control
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(ownerId) {
+      return request.auth.uid == ownerId;
+    }
+    
+    function isCollaborator(collaboratorIds) {
+      return request.auth.uid in collaboratorIds;
+    }
+    
+    function hasValidUserData() {
+      return request.resource.data.keys().hasAll(['id', 'email', 'displayName']) &&
+             request.resource.data.id == request.auth.uid &&
+             request.resource.data.email == request.auth.token.email;
+    }
+    
+    function hasValidTripData() {
+      return request.resource.data.keys().hasAll(['id', 'name', 'durationDays', 'ownerId', 'collaboratorIds', 'createdAt', 'updatedAt']) &&
+             request.resource.data.ownerId == request.auth.uid &&
+             request.resource.data.durationDays is int &&
+             request.resource.data.durationDays > 0 &&
+             request.resource.data.durationDays <= 365 &&
+             request.resource.data.name is string &&
+             request.resource.data.name.size() > 0 &&
+             request.resource.data.name.size() <= 100 &&
+             request.resource.data.collaboratorIds is list;
+    }
+    
+    function hasValidActivityData() {
+      return request.resource.data.keys().hasAll(['id', 'tripId', 'place', 'activityType', 'createdBy', 'createdAt', 'brainstormIdeas']) &&
+             request.resource.data.createdBy == request.auth.uid &&
+             request.resource.data.place is string &&
+             request.resource.data.place.size() > 0 &&
+             request.resource.data.place.size() <= 200 &&
+             request.resource.data.activityType is string &&
+             request.resource.data.activityType.size() > 0 &&
+             request.resource.data.activityType.size() <= 100 &&
+             request.resource.data.brainstormIdeas is list &&
+             (request.resource.data.price == null || request.resource.data.price is string) &&
+             (request.resource.data.notes == null || request.resource.data.notes is string) &&
+             (request.resource.data.assignedDay == null || request.resource.data.assignedDay is string) &&
+             (request.resource.data.dayOrder == null || request.resource.data.dayOrder is int);
+    }
+    
+    function canAccessTrip(tripId) {
+      let trip = get(/databases/$(database)/documents/trips/$(tripId));
+      return isOwner(trip.data.ownerId) || isCollaborator(trip.data.collaboratorIds);
+    }
+    
+    // Users collection - users can only read/write their own user document
+    match /users/{userId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId) && hasValidUserData();
+      allow update: if isAuthenticated() && isOwner(userId) && hasValidUserData();
+      allow delete: if false; // Prevent user deletion through Firestore
+    }
+    
+    // Trips collection - collaborative access control
+    match /trips/{tripId} {
+      // Read access for owners and collaborators
+      allow read: if isAuthenticated() && 
+        (isOwner(resource.data.ownerId) || isCollaborator(resource.data.collaboratorIds));
+      
+      // Create access - only authenticated users can create trips they own
+      allow create: if isAuthenticated() && hasValidTripData();
+      
+      // Update access for owners and collaborators with validation
+      allow update: if isAuthenticated() && 
+        (isOwner(resource.data.ownerId) || isCollaborator(resource.data.collaboratorIds)) &&
+        // Ensure critical fields are not changed inappropriately
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.ownerId == resource.data.ownerId &&
+        // Validate updated data structure
+        request.resource.data.keys().hasAll(['id', 'name', 'durationDays', 'ownerId', 'collaboratorIds', 'createdAt', 'updatedAt']) &&
+        request.resource.data.durationDays is int &&
+        request.resource.data.durationDays > 0 &&
+        request.resource.data.durationDays <= 365 &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.name.size() <= 100 &&
+        request.resource.data.collaboratorIds is list &&
+        // Only owner can modify collaborators
+        (request.resource.data.collaboratorIds == resource.data.collaboratorIds || 
+         isOwner(resource.data.ownerId));
+      
+      // Delete access - only owners can delete trips
+      allow delete: if isAuthenticated() && isOwner(resource.data.ownerId);
+    }
+    
+    // Activities collection - access based on associated trip permissions
+    match /activities/{activityId} {
+      // Read access for users who can access the associated trip
+      allow read: if isAuthenticated() && 
+        exists(/databases/$(database)/documents/trips/$(resource.data.tripId)) &&
+        canAccessTrip(resource.data.tripId);
+      
+      // Create access for users who can access the associated trip
+      allow create: if isAuthenticated() && 
+        exists(/databases/$(database)/documents/trips/$(request.resource.data.tripId)) &&
+        canAccessTrip(request.resource.data.tripId) &&
+        hasValidActivityData();
+      
+      // Update access for users who can access the associated trip
+      allow update: if isAuthenticated() && 
+        exists(/databases/$(database)/documents/trips/$(resource.data.tripId)) &&
+        canAccessTrip(resource.data.tripId) &&
+        // Ensure critical fields are not changed inappropriately
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.tripId == resource.data.tripId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        // Validate updated data structure
+        request.resource.data.keys().hasAll(['id', 'tripId', 'place', 'activityType', 'createdBy', 'createdAt', 'brainstormIdeas']) &&
+        request.resource.data.place is string &&
+        request.resource.data.place.size() > 0 &&
+        request.resource.data.place.size() <= 200 &&
+        request.resource.data.activityType is string &&
+        request.resource.data.activityType.size() > 0 &&
+        request.resource.data.activityType.size() <= 100 &&
+        request.resource.data.brainstormIdeas is list &&
+        (request.resource.data.price == null || request.resource.data.price is string) &&
+        (request.resource.data.notes == null || request.resource.data.notes is string) &&
+        (request.resource.data.assignedDay == null || request.resource.data.assignedDay is string) &&
+        (request.resource.data.dayOrder == null || request.resource.data.dayOrder is int);
+      
+      // Delete access for activity creator or trip owner
+      allow delete: if isAuthenticated() && 
+        exists(/databases/$(database)/documents/trips/$(resource.data.tripId)) &&
+        (isOwner(resource.data.createdBy) || 
+         isOwner(get(/databases/$(database)/documents/trips/$(resource.data.tripId)).data.ownerId));
+    }
+    
+    // Test collection for connection testing (allow authenticated users to read/write)
+    // This should be removed in production
+    match /test/{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

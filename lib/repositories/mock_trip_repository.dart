@@ -29,15 +29,14 @@ class MockTripRepository implements TripRepository {
     if (!_userTripControllers.containsKey(userId)) {
       _userTripControllers[userId] = StreamController<List<Trip>>.broadcast();
     }
-    
-    // Emit current trips for the user
+    // Emit current trips for the user asynchronously to ensure listeners receive the event
     final userTrips = _trips.values
         .where((trip) => trip.ownerId == userId || trip.collaboratorIds.contains(userId))
         .toList()
       ..sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-    
-    _userTripControllers[userId]!.add(userTrips);
-    
+    Future.microtask(() {
+      _userTripControllers[userId]!.add(userTrips);
+    });
     return _userTripControllers[userId]!.stream;
   }
   
@@ -136,7 +135,7 @@ class MockTripRepository implements TripRepository {
   @override
   Future<Trip?> getTripById(String tripId) async {
     // Simulate network delay
-    await Future.delayed(const Duration(milliseconds: 100));
+    await Future.delayed(const Duration(milliseconds: 1000));
     
     return _trips[tripId];
   }

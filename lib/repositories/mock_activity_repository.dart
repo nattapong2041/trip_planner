@@ -74,7 +74,9 @@ class MockActivityRepository implements ActivityRepository {
         .toList()
       ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
     
-    _tripActivityControllers[tripId]!.add(tripActivities);
+    Future.microtask(() {
+      _tripActivityControllers[tripId]!.add(tripActivities);
+    });
     
     return _tripActivityControllers[tripId]!.stream;
   }

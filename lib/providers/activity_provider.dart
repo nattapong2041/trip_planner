@@ -19,7 +19,7 @@ ActivityRepository activityRepository(Ref ref) {
 class ActivityListNotifier extends _$ActivityListNotifier {
   @override
   Stream<List<Activity>> build(String tripId) {
-    final activityRepository = ref.read(activityRepositoryProvider);
+    final activityRepository = ref.watch(activityRepositoryProvider);
     return activityRepository.getTripActivities(tripId).handleError((error, stackTrace) {
       final appError = _handleActivityError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
@@ -197,7 +197,8 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       
       // If moving from a day (not from pool), reorder remaining activities in the source day
       if (fromDay != null) {
-        final allActivities = await ref.read(activityListNotifierProvider(activity.tripId).future);
+        final allActivities = await future;
+        // Get all activities for the source day
         final remainingActivities = allActivities
             .where((a) => a.assignedDay == fromDay && a.id != activityId)
             .toList()
@@ -214,7 +215,7 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       }
       
       // Reorder activities in the destination day to make room
-      final allActivities = await ref.read(activityListNotifierProvider(activity.tripId).future);
+      final allActivities = await future;
       final destinationActivities = allActivities
           .where((a) => a.assignedDay == toDay && a.id != activityId)
           .toList()
@@ -300,7 +301,7 @@ class ActivityDetailNotifier extends _$ActivityDetailNotifier {
   @override
   Future<Activity?> build(String activityId) async {
     try {
-      final activityRepository = ref.read(activityRepositoryProvider);
+      final activityRepository = ref.watch(activityRepositoryProvider);
       return await activityRepository.getActivityById(activityId);
     } catch (error) {
       final appError = const AppError.unknown('Failed to load activity details.');

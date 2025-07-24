@@ -18,26 +18,21 @@ TripRepository tripRepository(Ref ref) {
 class TripListNotifier extends _$TripListNotifier {
   @override
   Stream<List<Trip>> build() {
-    // Listen to authentication state changes reactively
-    return ref.watch(authNotifierProvider).when(
-      data: (user) {
-        if (user == null) {
-          // Return empty stream if no user is authenticated
-          return Stream.value(<Trip>[]);
-        }
-        // Watch tripRepositoryProvider so it updates if the repo changes
-        final tripRepository = ref.watch(tripRepositoryProvider);
-        // Return stream of trips for the authenticated user
-        return tripRepository.getUserTrips(user.id);
-      },
-      loading: () => Stream.value(<Trip>[]),
-      error: (error, stackTrace) {
-        // Handle error by notifying global error handler
-        final appError = _handleTripError(error);
-        ref.read(errorNotifierProvider.notifier).showError(appError);
-        return Stream.value(<Trip>[]);
-      },
-    );
+    final authState = ref.watch(authNotifierProvider);
+    if (authState.isLoading) {
+      return Stream.value(<Trip>[]);
+    }
+    if (authState.hasError) {
+      final appError = _handleTripError(authState.error!);
+      ref.read(errorNotifierProvider.notifier).showError(appError);
+      return Stream.value(<Trip>[]);
+    }
+    final user = authState.value;
+    if (user == null) {
+      return Stream.value(<Trip>[]);
+    }
+    final tripRepository = ref.watch(tripRepositoryProvider);
+    return tripRepository.getUserTrips(user.id);
   }
   
   /// Create a new trip
@@ -145,8 +140,14 @@ class TripDetailNotifier extends _$TripDetailNotifier {
   @override
   Future<Trip?> build(String tripId) async {
     try {
-      final tripRepository = ref.read(tripRepositoryProvider);
-      return await tripRepository.getTripById(tripId);
+      final tripRepository = ref.watch(tripRepositoryProvider);
+      final trip = await tripRepository.getTripById(tripId);
+      if (trip == null) {
+        final appError = const AppError.validation('Trip not found or no longer exists.');
+        ref.read(errorNotifierProvider.notifier).showError(appError);
+        throw appError;
+      }
+      return trip;
     } catch (error) {
       final appError = const AppError.unknown('Failed to load trip details.');
       ref.read(errorNotifierProvider.notifier).showError(appError);

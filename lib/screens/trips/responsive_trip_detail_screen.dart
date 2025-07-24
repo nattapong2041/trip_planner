@@ -22,6 +22,7 @@ class ResponsiveTripDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tripAsync = ref.watch(tripDetailNotifierProvider(tripId));
 
+    print(tripAsync.isLoading);
     return tripAsync.when(
       loading: () => const Scaffold(
         body: ResponsiveLoadingIndicator(message: 'Loading trip details...'),

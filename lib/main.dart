@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:logger/logger.dart';
+import 'package:trip_planner/firebase_options.dart';
 import 'config/app_config.dart';
 import 'screens/app.dart';
 
@@ -23,7 +24,7 @@ void main() async {
   try {
     // Initialize Firebase
     await Firebase.initializeApp(
-      options: AppConfig.firebaseOptions,
+      options: DefaultFirebaseOptions.currentPlatform,
     );
     logger.i('Firebase initialized successfully');
   } catch (e) {

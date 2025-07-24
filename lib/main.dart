@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:logger/logger.dart';
 import 'package:trip_planner/firebase_options.dart';
-import 'config/app_config.dart';
 import 'screens/app.dart';
+import 'services/firebase_service.dart';
 
 // Global logger instance
 final logger = Logger(
@@ -14,7 +14,7 @@ final logger = Logger(
     lineLength: 120,
     colors: true,
     printEmojis: true,
-    printTime: true,
+    dateTimeFormat: DateTimeFormat.onlyTimeAndSinceStart,
   ),
 );
 
@@ -27,6 +27,16 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     logger.i('Firebase initialized successfully');
+    
+    // Test Firebase connection and basic operations
+    final testResults = await FirebaseService.testFirebaseServices();
+    logger.i('Firebase services test results: $testResults');
+    
+    if (testResults['auth'] == true && testResults['firestore'] == true) {
+      logger.i('All Firebase services are working correctly');
+    } else {
+      logger.w('Some Firebase services may not be working properly');
+    }
   } catch (e) {
     logger.e('Failed to initialize Firebase: $e');
     // In a real app, you might want to handle this more gracefully

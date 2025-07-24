@@ -3,14 +3,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/user.dart';
 import '../models/app_error.dart';
 import '../repositories/auth_repository.dart';
-import '../repositories/mock_auth_repository.dart';
+import '../repositories/firebase_auth_repository.dart';
 
 part 'auth_provider.g.dart';
 
 /// Provider for the AuthRepository instance
 @riverpod
 AuthRepository authRepository(Ref ref) {
-  return MockAuthRepository();
+  return FirebaseAuthRepository();
 }
 
 /// Notifier for managing authentication state and operations
@@ -67,12 +67,22 @@ class AuthNotifier extends _$AuthNotifier {
   
   /// Helper method to convert exceptions to AppError
   AppError _handleAuthError(Object error) {
-    if (error.toString().contains('network')) {
+    final errorMessage = error.toString();
+    
+    if (errorMessage.contains('network') || errorMessage.contains('Network error')) {
       return const AppError.network('Network error during authentication. Please check your connection.');
-    } else if (error.toString().contains('cancelled')) {
+    } else if (errorMessage.contains('cancelled') || errorMessage.contains('User cancelled')) {
       return const AppError.authentication('Authentication was cancelled.');
+    } else if (errorMessage.contains('not available')) {
+      return const AppError.authentication('This sign-in method is not available on your device.');
+    } else if (errorMessage.contains('account already exists')) {
+      return const AppError.authentication('An account already exists with a different sign-in method.');
+    } else if (errorMessage.contains('disabled')) {
+      return const AppError.authentication('This account has been disabled.');
+    } else if (errorMessage.contains('too many requests')) {
+      return const AppError.authentication('Too many requests. Please try again later.');
     } else {
-      return const AppError.authentication('Authentication failed. Please try again.');
+      return AppError.authentication('Authentication failed: ${errorMessage.replaceAll('Exception: ', '')}');
     }
   }
 }

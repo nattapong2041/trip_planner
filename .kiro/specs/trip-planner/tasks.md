@@ -99,7 +99,7 @@
   - Implement proper data access controls
   - _Requirements: 1.2, 1.3, 8.1, 8.2_
 
-- [ ] 15. Build Firebase authentication system
+- [x] 15. Build Firebase authentication system
   - Replace mock AuthRepository with Firebase implementation
   - Implement Google and Apple sign-in providers
   - Create AuthNotifier with Firebase Auth integration

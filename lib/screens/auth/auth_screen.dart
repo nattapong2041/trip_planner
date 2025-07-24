@@ -1,32 +1,54 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
+import '../../models/user.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/common/responsive_error_display.dart';
 import '../../widgets/common/loading_button.dart';
 
-class AuthScreen extends ConsumerWidget {
+class AuthScreen extends ConsumerStatefulWidget {
   const AuthScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AuthScreen> createState() => _AuthScreenState();
+}
+
+class _AuthScreenState extends ConsumerState<AuthScreen> {
+  bool _isGoogleLoading = false;
+  bool _isAppleLoading = false;
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authNotifierProvider);
+    final errorState = ref.watch(errorNotifierProvider);
+
+    // Listen for auth state changes and show success message
+    ref.listen<AsyncValue<User?>>(authNotifierProvider, (previous, next) {
+      if (next.hasValue && next.value != null) {
+        ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear(
+          'Welcome back, ${next.value!.displayName}!',
+        );
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Trip Planner'),
+        backgroundColor: Theme.of(context).colorScheme.surface,
+        elevation: 0,
       ),
       body: ResponsiveContainer(
         child: ResponsiveBuilder(
-          mobile: _buildMobileLayout(context, ref, authState),
-          tablet: _buildTabletLayout(context, ref, authState),
-          desktop: _buildDesktopLayout(context, ref, authState),
+          mobile: _buildMobileLayout(context, authState, errorState),
+          tablet: _buildTabletLayout(context, authState, errorState),
+          desktop: _buildDesktopLayout(context, authState, errorState),
         ),
       ),
     );
   }
 
-  Widget _buildMobileLayout(BuildContext context, WidgetRef ref, AsyncValue authState) {
+  Widget _buildMobileLayout(BuildContext context, AsyncValue authState, errorState) {
     return Center(
       child: Padding(
         padding: EdgeInsets.all(Responsive.getSpacing(context)),
@@ -53,14 +75,14 @@ class AuthScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
             ),
             SizedBox(height: Responsive.getSpacing(context, baseSpacing: 48.0)),
-            _buildAuthButtons(context, ref, authState),
+            _buildAuthButtons(context, authState, errorState),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTabletLayout(BuildContext context, WidgetRef ref, AsyncValue authState) {
+  Widget _buildTabletLayout(BuildContext context, AsyncValue authState, errorState) {
     return Center(
       child: Card(
         margin: EdgeInsets.all(Responsive.getSpacing(context)),
@@ -90,7 +112,7 @@ class AuthScreen extends ConsumerWidget {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: Responsive.getSpacing(context, baseSpacing: 32.0)),
-              _buildAuthButtons(context, ref, authState),
+              _buildAuthButtons(context, authState, errorState),
             ],
           ),
         ),
@@ -98,7 +120,7 @@ class AuthScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildDesktopLayout(BuildContext context, WidgetRef ref, AsyncValue authState) {
+  Widget _buildDesktopLayout(BuildContext context, AsyncValue authState, errorState) {
     return Row(
       children: [
         // Left side - Hero section
@@ -165,7 +187,7 @@ class AuthScreen extends ConsumerWidget {
                     ),
                   ),
                   SizedBox(height: Responsive.getSpacing(context, baseSpacing: 32.0)),
-                  _buildAuthButtons(context, ref, authState),
+                  _buildAuthButtons(context, authState, errorState),
                 ],
               ),
             ),
@@ -175,25 +197,23 @@ class AuthScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildAuthButtons(BuildContext context, WidgetRef ref, AsyncValue authState) {
-    final isLoading = authState.isLoading;
-
+  Widget _buildAuthButtons(BuildContext context, AsyncValue authState, errorState) {
     return Column(
       children: [
         SizedBox(
           width: double.infinity,
           height: 48,
           child: LoadingButton(
-            onPressed: () async {
-              await ref.read(authNotifierProvider.notifier).signInWithGoogle();
-            },
-            isLoading: isLoading,
-            loadingText: 'Signing in...',
+            onPressed: _isGoogleLoading ? null : () => _handleGoogleSignIn(),
+            isLoading: _isGoogleLoading,
+            loadingText: 'Signing in with Google...',
             icon: Icon(
               Icons.login,
               size: Responsive.getIconSize(context, baseSize: 20),
             ),
             style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Theme.of(context).colorScheme.onPrimary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -201,36 +221,131 @@ class AuthScreen extends ConsumerWidget {
             child: const Text('Sign in with Google'),
           ),
         ),
+        
         SizedBox(height: Responsive.getSpacing(context)),
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: LoadingButton(
-            onPressed: () async {
-              await ref.read(authNotifierProvider.notifier).signInWithApple();
-            },
-            isLoading: isLoading,
-            loadingText: 'Signing in...',
-            icon: Icon(
-              Icons.apple,
-              size: Responsive.getIconSize(context, baseSize: 20),
-            ),
-            style: ElevatedButton.styleFrom(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+        
+        // Apple Sign In Button (only show on supported platforms)
+        if (_isAppleSignInSupported()) ...[
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: LoadingButton(
+              onPressed: _isAppleLoading ? null : () => _handleAppleSignIn(),
+              isLoading: _isAppleLoading,
+              loadingText: 'Signing in with Apple...',
+              icon: Icon(
+                Icons.apple,
+                size: Responsive.getIconSize(context, baseSize: 20),
               ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.black,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text('Sign in with Apple'),
             ),
-            child: const Text('Sign in with Apple'),
-          ),
-        ),
-        if (authState.hasError) ...[
-          SizedBox(height: Responsive.getSpacing(context, baseSpacing: 24.0)),
-          ResponsiveErrorDisplay(
-            error: 'Authentication error: ${authState.error}',
-            compact: true,
           ),
         ],
+        
+        // Error Display
+        if (errorState != null) ...[
+          SizedBox(height: Responsive.getSpacing(context, baseSpacing: 16.0)),
+          ResponsiveErrorDisplay(
+            error: errorState.toString().replaceAll('AppError.authentication(message: ', '').replaceAll(')', ''),
+            compact: true,
+            onRetry: () {
+              ref.read(errorNotifierProvider.notifier).clearError();
+            },
+          ),
+        ],
+        
+        // Success Message
+        Consumer(
+          builder: (context, ref, child) {
+            final successMessage = ref.watch(successNotifierProvider);
+            if (successMessage != null) {
+              return Padding(
+                padding: EdgeInsets.only(top: Responsive.getSpacing(context, baseSpacing: 16.0)),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle,
+                        color: Theme.of(context).colorScheme.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          successMessage,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
       ],
     );
+  }
+
+  /// Handle Google Sign In
+  Future<void> _handleGoogleSignIn() async {
+    setState(() {
+      _isGoogleLoading = true;
+    });
+
+    try {
+      await ref.read(authNotifierProvider.notifier).signInWithGoogle();
+    } catch (e) {
+      // Error is handled by the provider and shown in UI
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGoogleLoading = false;
+        });
+      }
+    }
+  }
+
+  /// Handle Apple Sign In
+  Future<void> _handleAppleSignIn() async {
+    setState(() {
+      _isAppleLoading = true;
+    });
+
+    try {
+      await ref.read(authNotifierProvider.notifier).signInWithApple();
+    } catch (e) {
+      // Error is handled by the provider and shown in UI
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isAppleLoading = false;
+        });
+      }
+    }
+  }
+
+  /// Check if Apple Sign In is supported on current platform
+  bool _isAppleSignInSupported() {
+    // Apple Sign In is available on iOS, macOS, and web
+    return defaultTargetPlatform == TargetPlatform.iOS ||
+           defaultTargetPlatform == TargetPlatform.macOS ||
+           kIsWeb;
   }
 }

@@ -48,7 +48,7 @@ final class AuthRepositoryProvider
   }
 }
 
-String _$authRepositoryHash() => r'866d07b3c40dd05f83eccba1be13d0f8f6aae65f';
+String _$authRepositoryHash() => r'3a723e34e8f0950a5e5ba88000eacf0b61082153';
 
 /// Notifier for managing authentication state and operations
 @ProviderFor(AuthNotifier)
@@ -77,7 +77,7 @@ final class AuthNotifierProvider
   AuthNotifier create() => AuthNotifier();
 }
 
-String _$authNotifierHash() => r'2738b0ef5bac63862d7c4dc6663eb8c005d8c7f1';
+String _$authNotifierHash() => r'79c858ad5252da99f2c70f948d6341769410bd8b';
 
 abstract class _$AuthNotifier extends $StreamNotifier<User?> {
   Stream<User?> build();

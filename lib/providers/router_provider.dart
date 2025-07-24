@@ -23,32 +23,70 @@ GoRouter router(Ref ref) {
     next.when(
       data: (user) => authStreamController.add(user),
       loading: () => {},
-      error: (error, stack) => {},
+      error: (error, stack) => authStreamController.add(null),
     );
   });
   
   return GoRouter(
-    initialLocation: '/trips',
+    initialLocation: '/auth',
     redirect: (context, state) {
-      // Get current auth state
-      final authState = ref.read(authNotifierProvider);
-      final isAuthenticated = authState.value != null;
-      final isAuthRoute = state.matchedLocation.startsWith('/auth');
-      
-      // If not authenticated and not on auth route, redirect to auth
-      if (!isAuthenticated && !isAuthRoute) {
+      try {
+        // Get current auth state
+        final authState = ref.read(authNotifierProvider);
+        
+        // Handle loading state - don't redirect while loading
+        if (authState.isLoading) {
+          return null;
+        }
+        
+        // Handle error state - redirect to auth on auth errors
+        if (authState.hasError) {
+          return '/auth';
+        }
+        
+        // Check if user is authenticated
+        final isAuthenticated = authState.hasValue && authState.value != null;
+        final currentLocation = state.matchedLocation;
+        final isAuthRoute = currentLocation == '/auth';
+        
+        // Authentication guards
+        if (!isAuthenticated) {
+          // User is not authenticated
+          if (!isAuthRoute) {
+            // Redirect to auth screen if trying to access protected routes
+            return '/auth';
+          }
+          // Already on auth screen, no redirect needed
+          return null;
+        } else {
+          // User is authenticated
+          if (isAuthRoute) {
+            // Redirect authenticated users away from auth screen
+            return '/trips';
+          }
+          
+          // Check if trying to access protected routes
+          if (_isProtectedRoute(currentLocation)) {
+            // User is authenticated and accessing protected route - allow
+            return null;
+          }
+          
+          // For any other routes, allow access
+          return null;
+        }
+      } catch (error) {
+        // If there's an error in redirect logic, default to auth
+        if (kDebugMode) {
+          print('Router redirect error: $error');
+        }
         return '/auth';
       }
-      
-      // If authenticated and on auth route, redirect to trips
-      if (isAuthenticated && isAuthRoute) {
-        return '/trips';
-      }
-      
-      // No redirect needed
-      return null;
     },
     refreshListenable: _GoRouterRefreshStream(authStreamController.stream),
+    errorBuilder: (context, state) {
+      // Handle navigation errors
+      return const AuthScreen();
+    },
     routes: [
       GoRoute(
         path: '/auth',
@@ -99,6 +137,21 @@ GoRouter router(Ref ref) {
       ),
     ],
   );
+}
+
+/// Helper function to check if a route requires authentication
+bool _isProtectedRoute(String location) {
+  // All routes except auth are protected
+  const publicRoutes = ['/auth'];
+  
+  // Check if the location starts with any public route
+  for (final route in publicRoutes) {
+    if (location.startsWith(route)) {
+      return false;
+    }
+  }
+  
+  return true;
 }
 
 /// Helper class to make GoRouter refresh when auth state changes

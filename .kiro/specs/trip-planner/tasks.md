@@ -112,7 +112,7 @@
   - Implement real-time stream subscriptions for data updates
   - _Requirements: 2.1, 2.2, 4.1, 4.4, 8.1, 8.2_
 
-- [ ] 17. Update navigation with authentication guards
+- [x] 17. Update navigation with authentication guards
   - Add authentication guards to routing
   - Implement route redirection based on auth state
   - Test authenticated navigation flow

@@ -77,7 +77,7 @@
   - Add success feedback for user actions
   - _Requirements: 9.4, 9.5_
 
-- [ ] 12. Create test suite for core functionality
+- [x] 12. Create test suite for core functionality
   - Write unit tests for models and mock repositories
   - Create widget tests for all screens and components
   - Test drag-and-drop functionality and state management

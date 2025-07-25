@@ -1,5 +1,6 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/trip.dart';
+import '../models/user.dart';
 import '../models/app_error.dart';
 import '../repositories/trip_repository.dart';
 import '../repositories/firebase_trip_repository.dart';
@@ -120,16 +121,43 @@ class TripListNotifier extends _$TripListNotifier {
     }
   }
   
+  /// Remove a collaborator from a trip
+  Future<void> removeCollaborator(String tripId, String userId) async {
+    try {
+      final tripRepository = ref.read(tripRepositoryProvider);
+      await tripRepository.removeCollaborator(tripId, userId);
+      // The stream will automatically update with the removal
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Collaborator removed successfully!');
+    } catch (error) {
+      final appError = _handleTripError(error);
+      ref.read(errorNotifierProvider.notifier).showError(appError);
+      rethrow;
+    }
+  }
+  
   /// Helper method to convert exceptions to AppError
   AppError _handleTripError(Object error) {
-    if (error.toString().contains('network')) {
+    final errorMessage = error.toString();
+    
+    if (errorMessage.contains('network')) {
       return const AppError.network('Network error while managing trips. Please check your connection.');
-    } else if (error.toString().contains('permission')) {
+    } else if (errorMessage.contains('permission')) {
       return const AppError.permission('You do not have permission to perform this action.');
-    } else if (error.toString().contains('not found')) {
+    } else if (errorMessage.contains('not found') && errorMessage.contains('Trip')) {
       return const AppError.validation('Trip not found or no longer exists.');
+    } else if (errorMessage.contains('not found') && errorMessage.contains('need to sign up')) {
+      // Handle user not found for collaboration
+      return AppError.validation(errorMessage.replaceAll('Exception: ', ''));
+    } else if (errorMessage.contains('already a collaborator')) {
+      return const AppError.validation('This user is already a collaborator on this trip.');
+    } else if (errorMessage.contains('already the owner')) {
+      return const AppError.validation('This user is already the owner of this trip.');
+    } else if (errorMessage.contains('Cannot remove the trip owner')) {
+      return const AppError.validation('Cannot remove the trip owner from collaborators.');
     } else {
-      return const AppError.unknown('An error occurred while managing trips. Please try again.');
+      return AppError.unknown('An error occurred while managing trips: ${errorMessage.replaceAll('Exception: ', '')}');
     }
   }
 }
@@ -143,19 +171,41 @@ class TripDetailNotifier extends _$TripDetailNotifier {
       final tripRepository = ref.watch(tripRepositoryProvider);
       final trip = await tripRepository.getTripById(tripId);
       if (trip == null) {
-        final appError = const AppError.validation('Trip not found or no longer exists.');
+        const appError = AppError.validation('Trip not found or no longer exists.');
         ref.read(errorNotifierProvider.notifier).showError(appError);
         throw appError;
       }
       return trip;
     } catch (error) {
-      final appError = const AppError.unknown('Failed to load trip details.');
+      const appError = AppError.unknown('Failed to load trip details.');
       ref.read(errorNotifierProvider.notifier).showError(appError);
       throw appError;
     }
   }
   
   /// Refresh the trip data
+  Future<void> refresh() async {
+    ref.invalidateSelf();
+    await future;
+  }
+}
+
+/// Provider for getting trip collaborators
+@riverpod
+class TripCollaboratorsNotifier extends _$TripCollaboratorsNotifier {
+  @override
+  Future<List<User>> build(String tripId) async {
+    try {
+      final tripRepository = ref.watch(tripRepositoryProvider);
+      return await tripRepository.getTripCollaborators(tripId);
+    } catch (error) {
+      const appError = AppError.unknown('Failed to load trip collaborators.');
+      ref.read(errorNotifierProvider.notifier).showError(appError);
+      throw appError;
+    }
+  }
+  
+  /// Refresh the collaborators data
   Future<void> refresh() async {
     ref.invalidateSelf();
     await future;

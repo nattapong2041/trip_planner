@@ -140,6 +140,61 @@ class MockTripRepository implements TripRepository {
     return _trips[tripId];
   }
   
+  @override
+  Future<List<User>> getTripCollaborators(String tripId) async {
+    // Simulate network delay
+    await Future.delayed(const Duration(milliseconds: 200));
+    
+    final trip = _trips[tripId];
+    if (trip == null) {
+      throw Exception('Trip not found');
+    }
+    
+    // Get owner and collaborators
+    final allUserIds = {trip.ownerId, ...trip.collaboratorIds}.toList();
+    
+    final collaborators = _mockUsers
+        .where((user) => allUserIds.contains(user.id))
+        .toList();
+    
+    return collaborators;
+  }
+  
+  @override
+  Future<void> removeCollaborator(String tripId, String userId) async {
+    // Simulate network delay
+    await Future.delayed(const Duration(milliseconds: 200));
+    
+    final trip = _trips[tripId];
+    if (trip == null) {
+      throw Exception('Trip not found');
+    }
+    
+    if (trip.ownerId == userId) {
+      throw Exception('Cannot remove the trip owner');
+    }
+    
+    final updatedCollaboratorIds = trip.collaboratorIds
+        .where((id) => id != userId)
+        .toList();
+    
+    final updatedTrip = trip.copyWith(
+      collaboratorIds: updatedCollaboratorIds,
+      updatedAt: DateTime.now(),
+    );
+    
+    _trips[tripId] = updatedTrip;
+    
+    // Notify owner and remaining collaborators
+    _notifyUserTripUpdates(updatedTrip.ownerId);
+    for (final collaboratorId in updatedTrip.collaboratorIds) {
+      _notifyUserTripUpdates(collaboratorId);
+    }
+    
+    // Also notify the removed user
+    _notifyUserTripUpdates(userId);
+  }
+  
   void _notifyUserTripUpdates(String userId) {
     if (_userTripControllers.containsKey(userId)) {
       final userTrips = _trips.values

@@ -4,6 +4,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:flutter/foundation.dart';
 import '../models/user.dart' as app_user;
+import '../services/user_service.dart';
 import 'auth_repository.dart';
 
 /// Firebase implementation of AuthRepository
@@ -62,7 +63,14 @@ class FirebaseAuthRepository implements AuthRepository {
 
     // Once signed in, return the UserCredential
     final userCredential = await _firebaseAuth.signInWithCredential(credential);
-    return _firebaseUserToAppUser(userCredential.user);
+    final user = _firebaseUserToAppUser(userCredential.user);
+    
+    // Create or update user document in Firestore
+    if (user != null) {
+      await UserService.createOrUpdateUserDocument(user);
+    }
+    
+    return user;
   }
 
   /// Google Sign-In implementation for web platform
@@ -75,7 +83,14 @@ class FirebaseAuthRepository implements AuthRepository {
 
     // Once signed in, return the UserCredential
     final userCredential = await _firebaseAuth.signInWithPopup(googleProvider);
-    return _firebaseUserToAppUser(userCredential.user);
+    final user = _firebaseUserToAppUser(userCredential.user);
+    
+    // Create or update user document in Firestore
+    if (user != null) {
+      await UserService.createOrUpdateUserDocument(user);
+    }
+    
+    return user;
   }
 
   @override
@@ -105,7 +120,14 @@ class FirebaseAuthRepository implements AuthRepository {
       final firebase_auth.UserCredential userCredential =
           await _firebaseAuth.signInWithCredential(oauthCredential);
 
-      return _firebaseUserToAppUser(userCredential.user);
+      final user = _firebaseUserToAppUser(userCredential.user);
+      
+      // Create or update user document in Firestore
+      if (user != null) {
+        await UserService.createOrUpdateUserDocument(user);
+      }
+      
+      return user;
     } on firebase_auth.FirebaseAuthException catch (e) {
       throw _handleFirebaseAuthException(e);
     } on SignInWithAppleException catch (e) {

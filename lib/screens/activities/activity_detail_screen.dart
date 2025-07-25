@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/activity.dart';
-import '../../models/brainstorm_idea.dart';
 import '../../providers/activity_provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../widgets/activity/activity_card.dart';
+import '../../widgets/activity/reorderable_brainstorm_ideas.dart';
 import '../../utils/responsive.dart';
 import 'activity_edit_screen.dart';
 
@@ -24,14 +23,6 @@ class ActivityDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
-  final TextEditingController _brainstormController = TextEditingController();
-  bool _isAddingIdea = false;
-
-  @override
-  void dispose() {
-    _brainstormController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -195,154 +186,17 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
   }
 
   Widget _buildBrainstormSection(BuildContext context, Activity activity) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: Responsive.getSpacing(context),
-          ),
-          child: Row(
-            children: [
-              Icon(
-                Icons.lightbulb_outline,
-                color: Theme.of(context).colorScheme.primary,
-                size: Responsive.getIconSize(context, baseSize: 20),
-              ),
-              SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
-              Text(
-                'Brainstorm Ideas',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                '${activity.brainstormIdeas.length}',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: Responsive.getSpacing(context)),
-        
-        // Add Brainstorm Idea Input
-        Padding(
-          padding: EdgeInsets.symmetric(
-            horizontal: Responsive.getSpacing(context),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _brainstormController,
-                  decoration: const InputDecoration(
-                    hintText: 'Add a brainstorm idea...',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.lightbulb_outline),
-                  ),
-                  textInputAction: TextInputAction.send,
-                  onSubmitted: (_) => _addBrainstormIdea(),
-                  enabled: !_isAddingIdea,
-                ),
-              ),
-              SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
-              IconButton(
-                onPressed: _isAddingIdea ? null : _addBrainstormIdea,
-                icon: _isAddingIdea
-                    ? SizedBox(
-                        width: Responsive.getIconSize(context, baseSize: 20),
-                        height: Responsive.getIconSize(context, baseSize: 20),
-                        child: const CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.send),
-              ),
-            ],
-          ),
-        ),
-        SizedBox(height: Responsive.getSpacing(context)),
-        
-        // Brainstorm Ideas List
-        Expanded(
-          child: activity.brainstormIdeas.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.lightbulb_outline,
-                        size: Responsive.getIconSize(context, baseSize: 48),
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                      SizedBox(height: Responsive.getSpacing(context)),
-                      Text(
-                        'No brainstorm ideas yet',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                      ),
-                      SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
-                      Text(
-                        'Add ideas to help plan this activity',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Theme.of(context).colorScheme.outline,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              : _buildBrainstormList(context, activity),
-        ),
-      ],
+    return Padding(
+      padding: EdgeInsets.all(Responsive.getSpacing(context)),
+      child: ReorderableBrainstormIdeas(
+        activity: activity,
+        allowReordering: true,
+        allowEditing: true,
+      ),
     );
   }
 
-  Widget _buildBrainstormList(BuildContext context, Activity activity) {
-    if (Responsive.isLargeScreen(context)) {
-      // Grid layout for larger screens
-      return GridView.builder(
-        padding: EdgeInsets.symmetric(
-          horizontal: Responsive.getSpacing(context),
-        ),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: Responsive.isDesktop(context) ? 2 : 1,
-          crossAxisSpacing: Responsive.getSpacing(context),
-          mainAxisSpacing: Responsive.getSpacing(context, baseSpacing: 8.0),
-          childAspectRatio: 4,
-        ),
-        itemCount: activity.brainstormIdeas.length,
-        itemBuilder: (context, index) {
-          final idea = activity.brainstormIdeas[index];
-          return _BrainstormIdeaCard(
-            idea: idea,
-            onDelete: () => _deleteBrainstormIdea(idea.id),
-          );
-        },
-      );
-    } else {
-      // List layout for mobile
-      return ListView.builder(
-        padding: EdgeInsets.symmetric(
-          horizontal: Responsive.getSpacing(context),
-        ),
-        itemCount: activity.brainstormIdeas.length,
-        itemBuilder: (context, index) {
-          final idea = activity.brainstormIdeas[index];
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: Responsive.getSpacing(context, baseSpacing: 8.0),
-            ),
-            child: _BrainstormIdeaCard(
-              idea: idea,
-              onDelete: () => _deleteBrainstormIdea(idea.id),
-            ),
-          );
-        },
-      );
-    }
-  }
+
 
   void _navigateToEdit(Activity activity) {
     Navigator.of(context).push(
@@ -447,134 +301,6 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
     );
   }
 
-  Future<void> _addBrainstormIdea() async {
-    final description = _brainstormController.text.trim();
-    if (description.isEmpty) return;
 
-    setState(() {
-      _isAddingIdea = true;
-    });
-
-    try {
-      await ref.read(activityListNotifierProvider(widget.tripId).notifier)
-          .addBrainstormIdea(widget.activityId, description);
-      
-      _brainstormController.clear();
-      
-      // Refresh the activity details
-      ref.invalidate(activityDetailNotifierProvider(widget.activityId));
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to add idea: ${error.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isAddingIdea = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _deleteBrainstormIdea(String ideaId) async {
-    try {
-      await ref.read(activityListNotifierProvider(widget.tripId).notifier)
-          .removeBrainstormIdea(widget.activityId, ideaId);
-      
-      // Refresh the activity details
-      ref.invalidate(activityDetailNotifierProvider(widget.activityId));
-    } catch (error) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to delete idea: ${error.toString()}'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    }
-  }
 }
 
-class _BrainstormIdeaCard extends ConsumerWidget {
-  const _BrainstormIdeaCard({
-    required this.idea,
-    required this.onDelete,
-  });
-
-  final BrainstormIdea idea;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = ref.watch(authNotifierProvider).value;
-    final canDelete = currentUser?.id == idea.createdBy;
-
-    return Card(
-      margin: EdgeInsets.zero,
-      child: Padding(
-        padding: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 12.0)),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(
-              Icons.lightbulb_outline,
-              color: Theme.of(context).colorScheme.primary,
-              size: Responsive.getIconSize(context, baseSize: 20),
-            ),
-            SizedBox(width: Responsive.getSpacing(context, baseSpacing: 12.0)),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    idea.description,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  SizedBox(height: Responsive.getSpacing(context, baseSpacing: 4.0)),
-                  Text(
-                    'Added ${_formatDate(idea.createdAt)}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.outline,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (canDelete) ...[
-              SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
-              IconButton(
-                icon: Icon(
-                  Icons.delete_outline,
-                  size: Responsive.getIconSize(context, baseSize: 20),
-                ),
-                onPressed: onDelete,
-                color: Theme.of(context).colorScheme.error,
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final difference = now.difference(date);
-    
-    if (difference.inDays > 0) {
-      return '${difference.inDays} ${difference.inDays == 1 ? 'day' : 'days'} ago';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours} ${difference.inHours == 1 ? 'hour' : 'hours'} ago';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes} ${difference.inMinutes == 1 ? 'minute' : 'minutes'} ago';
-    } else {
-      return 'Just now';
-    }
-  }
-}

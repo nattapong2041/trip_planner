@@ -17,7 +17,9 @@ mixin _$BrainstormIdea {
   String get id;
   String get description;
   String get createdBy;
+  @TimestampConverter()
   DateTime get createdAt;
+  int get order;
 
   /// Create a copy of BrainstormIdea
   /// with the given fields replaced by the non-null parameter values.
@@ -41,17 +43,18 @@ mixin _$BrainstormIdea {
             (identical(other.createdBy, createdBy) ||
                 other.createdBy == createdBy) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.order, order) || other.order == order));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, id, description, createdBy, createdAt);
+      Object.hash(runtimeType, id, description, createdBy, createdAt, order);
 
   @override
   String toString() {
-    return 'BrainstormIdea(id: $id, description: $description, createdBy: $createdBy, createdAt: $createdAt)';
+    return 'BrainstormIdea(id: $id, description: $description, createdBy: $createdBy, createdAt: $createdAt, order: $order)';
   }
 }
 
@@ -62,7 +65,11 @@ abstract mixin class $BrainstormIdeaCopyWith<$Res> {
       _$BrainstormIdeaCopyWithImpl;
   @useResult
   $Res call(
-      {String id, String description, String createdBy, DateTime createdAt});
+      {String id,
+      String description,
+      String createdBy,
+      @TimestampConverter() DateTime createdAt,
+      int order});
 }
 
 /// @nodoc
@@ -82,6 +89,7 @@ class _$BrainstormIdeaCopyWithImpl<$Res>
     Object? description = null,
     Object? createdBy = null,
     Object? createdAt = null,
+    Object? order = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -100,6 +108,10 @@ class _$BrainstormIdeaCopyWithImpl<$Res>
           ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      order: null == order
+          ? _self.order
+          : order // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }
@@ -198,15 +210,15 @@ extension BrainstormIdeaPatterns on BrainstormIdea {
   @optionalTypeArgs
   TResult maybeWhen<TResult extends Object?>(
     TResult Function(String id, String description, String createdBy,
-            DateTime createdAt)?
+            @TimestampConverter() DateTime createdAt, int order)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _BrainstormIdea() when $default != null:
-        return $default(
-            _that.id, _that.description, _that.createdBy, _that.createdAt);
+        return $default(_that.id, _that.description, _that.createdBy,
+            _that.createdAt, _that.order);
       case _:
         return orElse();
     }
@@ -227,15 +239,15 @@ extension BrainstormIdeaPatterns on BrainstormIdea {
 
   @optionalTypeArgs
   TResult when<TResult extends Object?>(
-    TResult Function(
-            String id, String description, String createdBy, DateTime createdAt)
+    TResult Function(String id, String description, String createdBy,
+            @TimestampConverter() DateTime createdAt, int order)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _BrainstormIdea():
-        return $default(
-            _that.id, _that.description, _that.createdBy, _that.createdAt);
+        return $default(_that.id, _that.description, _that.createdBy,
+            _that.createdAt, _that.order);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -256,14 +268,14 @@ extension BrainstormIdeaPatterns on BrainstormIdea {
   @optionalTypeArgs
   TResult? whenOrNull<TResult extends Object?>(
     TResult? Function(String id, String description, String createdBy,
-            DateTime createdAt)?
+            @TimestampConverter() DateTime createdAt, int order)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _BrainstormIdea() when $default != null:
-        return $default(
-            _that.id, _that.description, _that.createdBy, _that.createdAt);
+        return $default(_that.id, _that.description, _that.createdBy,
+            _that.createdAt, _that.order);
       case _:
         return null;
     }
@@ -272,12 +284,14 @@ extension BrainstormIdeaPatterns on BrainstormIdea {
 
 /// @nodoc
 @JsonSerializable()
-class _BrainstormIdea implements BrainstormIdea {
+class _BrainstormIdea extends BrainstormIdea {
   const _BrainstormIdea(
       {required this.id,
       required this.description,
       required this.createdBy,
-      required this.createdAt});
+      @TimestampConverter() required this.createdAt,
+      this.order = 0})
+      : super._();
   factory _BrainstormIdea.fromJson(Map<String, dynamic> json) =>
       _$BrainstormIdeaFromJson(json);
 
@@ -288,7 +302,11 @@ class _BrainstormIdea implements BrainstormIdea {
   @override
   final String createdBy;
   @override
+  @TimestampConverter()
   final DateTime createdAt;
+  @override
+  @JsonKey()
+  final int order;
 
   /// Create a copy of BrainstormIdea
   /// with the given fields replaced by the non-null parameter values.
@@ -316,17 +334,18 @@ class _BrainstormIdea implements BrainstormIdea {
             (identical(other.createdBy, createdBy) ||
                 other.createdBy == createdBy) &&
             (identical(other.createdAt, createdAt) ||
-                other.createdAt == createdAt));
+                other.createdAt == createdAt) &&
+            (identical(other.order, order) || other.order == order));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode =>
-      Object.hash(runtimeType, id, description, createdBy, createdAt);
+      Object.hash(runtimeType, id, description, createdBy, createdAt, order);
 
   @override
   String toString() {
-    return 'BrainstormIdea(id: $id, description: $description, createdBy: $createdBy, createdAt: $createdAt)';
+    return 'BrainstormIdea(id: $id, description: $description, createdBy: $createdBy, createdAt: $createdAt, order: $order)';
   }
 }
 
@@ -339,7 +358,11 @@ abstract mixin class _$BrainstormIdeaCopyWith<$Res>
   @override
   @useResult
   $Res call(
-      {String id, String description, String createdBy, DateTime createdAt});
+      {String id,
+      String description,
+      String createdBy,
+      @TimestampConverter() DateTime createdAt,
+      int order});
 }
 
 /// @nodoc
@@ -359,6 +382,7 @@ class __$BrainstormIdeaCopyWithImpl<$Res>
     Object? description = null,
     Object? createdBy = null,
     Object? createdAt = null,
+    Object? order = null,
   }) {
     return _then(_BrainstormIdea(
       id: null == id
@@ -377,6 +401,10 @@ class __$BrainstormIdeaCopyWithImpl<$Res>
           ? _self.createdAt
           : createdAt // ignore: cast_nullable_to_non_nullable
               as DateTime,
+      order: null == order
+          ? _self.order
+          : order // ignore: cast_nullable_to_non_nullable
+              as int,
     ));
   }
 }

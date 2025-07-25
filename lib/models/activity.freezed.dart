@@ -24,6 +24,7 @@ mixin _$Activity {
   int? get dayOrder;
   String? get timeSlot; // e.g., "09:00", "14:30" - time for the activity
   String get createdBy;
+  @TimestampConverter()
   DateTime get createdAt;
   List<BrainstormIdea> get brainstormIdeas;
 
@@ -102,7 +103,7 @@ abstract mixin class $ActivityCopyWith<$Res> {
       int? dayOrder,
       String? timeSlot,
       String createdBy,
-      DateTime createdAt,
+      @TimestampConverter() DateTime createdAt,
       List<BrainstormIdea> brainstormIdeas});
 }
 
@@ -288,7 +289,7 @@ extension ActivityPatterns on Activity {
             int? dayOrder,
             String? timeSlot,
             String createdBy,
-            DateTime createdAt,
+            @TimestampConverter() DateTime createdAt,
             List<BrainstormIdea> brainstormIdeas)?
         $default, {
     required TResult orElse(),
@@ -340,7 +341,7 @@ extension ActivityPatterns on Activity {
             int? dayOrder,
             String? timeSlot,
             String createdBy,
-            DateTime createdAt,
+            @TimestampConverter() DateTime createdAt,
             List<BrainstormIdea> brainstormIdeas)
         $default,
   ) {
@@ -390,7 +391,7 @@ extension ActivityPatterns on Activity {
             int? dayOrder,
             String? timeSlot,
             String createdBy,
-            DateTime createdAt,
+            @TimestampConverter() DateTime createdAt,
             List<BrainstormIdea> brainstormIdeas)?
         $default,
   ) {
@@ -430,7 +431,7 @@ class _Activity extends Activity {
       this.dayOrder,
       this.timeSlot,
       required this.createdBy,
-      required this.createdAt,
+      @TimestampConverter() required this.createdAt,
       final List<BrainstormIdea> brainstormIdeas = const []})
       : _brainstormIdeas = brainstormIdeas,
         super._();
@@ -460,6 +461,7 @@ class _Activity extends Activity {
   @override
   final String createdBy;
   @override
+  @TimestampConverter()
   final DateTime createdAt;
   final List<BrainstormIdea> _brainstormIdeas;
   @override
@@ -552,7 +554,7 @@ abstract mixin class _$ActivityCopyWith<$Res>
       int? dayOrder,
       String? timeSlot,
       String createdBy,
-      DateTime createdAt,
+      @TimestampConverter() DateTime createdAt,
       List<BrainstormIdea> brainstormIdeas});
 }
 

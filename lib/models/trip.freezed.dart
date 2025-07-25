@@ -19,7 +19,9 @@ mixin _$Trip {
   int get durationDays;
   String get ownerId;
   List<String> get collaboratorIds;
+  @TimestampConverter()
   DateTime get createdAt;
+  @TimestampConverter()
   DateTime get updatedAt;
 
   /// Create a copy of Trip
@@ -79,8 +81,8 @@ abstract mixin class $TripCopyWith<$Res> {
       int durationDays,
       String ownerId,
       List<String> collaboratorIds,
-      DateTime createdAt,
-      DateTime updatedAt});
+      @TimestampConverter() DateTime createdAt,
+      @TimestampConverter() DateTime updatedAt});
 }
 
 /// @nodoc
@@ -235,8 +237,8 @@ extension TripPatterns on Trip {
             int durationDays,
             String ownerId,
             List<String> collaboratorIds,
-            DateTime createdAt,
-            DateTime updatedAt)?
+            @TimestampConverter() DateTime createdAt,
+            @TimestampConverter() DateTime updatedAt)?
         $default, {
     required TResult orElse(),
   }) {
@@ -271,8 +273,8 @@ extension TripPatterns on Trip {
             int durationDays,
             String ownerId,
             List<String> collaboratorIds,
-            DateTime createdAt,
-            DateTime updatedAt)
+            @TimestampConverter() DateTime createdAt,
+            @TimestampConverter() DateTime updatedAt)
         $default,
   ) {
     final _that = this;
@@ -305,8 +307,8 @@ extension TripPatterns on Trip {
             int durationDays,
             String ownerId,
             List<String> collaboratorIds,
-            DateTime createdAt,
-            DateTime updatedAt)?
+            @TimestampConverter() DateTime createdAt,
+            @TimestampConverter() DateTime updatedAt)?
         $default,
   ) {
     final _that = this;
@@ -322,16 +324,17 @@ extension TripPatterns on Trip {
 
 /// @nodoc
 @JsonSerializable()
-class _Trip implements Trip {
+class _Trip extends Trip {
   const _Trip(
       {required this.id,
       required this.name,
       required this.durationDays,
       required this.ownerId,
       required final List<String> collaboratorIds,
-      required this.createdAt,
-      required this.updatedAt})
-      : _collaboratorIds = collaboratorIds;
+      @TimestampConverter() required this.createdAt,
+      @TimestampConverter() required this.updatedAt})
+      : _collaboratorIds = collaboratorIds,
+        super._();
   factory _Trip.fromJson(Map<String, dynamic> json) => _$TripFromJson(json);
 
   @override
@@ -351,8 +354,10 @@ class _Trip implements Trip {
   }
 
   @override
+  @TimestampConverter()
   final DateTime createdAt;
   @override
+  @TimestampConverter()
   final DateTime updatedAt;
 
   /// Create a copy of Trip
@@ -418,8 +423,8 @@ abstract mixin class _$TripCopyWith<$Res> implements $TripCopyWith<$Res> {
       int durationDays,
       String ownerId,
       List<String> collaboratorIds,
-      DateTime createdAt,
-      DateTime updatedAt});
+      @TimestampConverter() DateTime createdAt,
+      @TimestampConverter() DateTime updatedAt});
 }
 
 /// @nodoc

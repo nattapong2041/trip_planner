@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/activity.dart';
 import '../../utils/responsive.dart';
+import 'activity_collaborator_info.dart';
 
 class ActivityCard extends StatelessWidget {
   const ActivityCard({
@@ -11,6 +12,7 @@ class ActivityCard extends StatelessWidget {
     this.onDelete,
     this.showActions = false,
     this.trailing,
+    this.showCollaboratorInfo = true,
   });
 
   final Activity activity;
@@ -19,6 +21,7 @@ class ActivityCard extends StatelessWidget {
   final VoidCallback? onDelete;
   final bool showActions;
   final Widget? trailing;
+  final bool showCollaboratorInfo;
 
   @override
   Widget build(BuildContext context) {
@@ -157,6 +160,12 @@ class ActivityCard extends StatelessWidget {
                     ),
                   ),
                 ),
+              ],
+              
+              // Collaborator information
+              if (showCollaboratorInfo) ...[
+                SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
+                ActivityCollaboratorInfo(activity: activity),
               ],
             ],
           ),

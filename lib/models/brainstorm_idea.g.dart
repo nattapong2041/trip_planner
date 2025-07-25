@@ -11,7 +11,8 @@ _BrainstormIdea _$BrainstormIdeaFromJson(Map<String, dynamic> json) =>
       id: json['id'] as String,
       description: json['description'] as String,
       createdBy: json['createdBy'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: const TimestampConverter().fromJson(json['createdAt']),
+      order: (json['order'] as num?)?.toInt() ?? 0,
     );
 
 Map<String, dynamic> _$BrainstormIdeaToJson(_BrainstormIdea instance) =>
@@ -19,5 +20,6 @@ Map<String, dynamic> _$BrainstormIdeaToJson(_BrainstormIdea instance) =>
       'id': instance.id,
       'description': instance.description,
       'createdBy': instance.createdBy,
-      'createdAt': instance.createdAt.toIso8601String(),
+      'createdAt': const TimestampConverter().toJson(instance.createdAt),
+      'order': instance.order,
     };

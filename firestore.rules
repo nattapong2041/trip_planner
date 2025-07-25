@@ -49,14 +49,14 @@ service cloud.firestore {
              request.resource.data.activityType.size() <= 100
     }
     
-    function canAccessTrip(tripId) {
-      let trip = get(/databases/$(database)/documents/trips/$(tripId));
-      return isOwner(trip.data.ownerId) || isCollaborator(trip.data.collaboratorIds);
+    function canAccessTrip(tripData) {
+      return isOwner(tripData.ownerId) || isCollaborator(tripData.collaboratorIds);
     }
     
-    // Users collection - users can only read/write their own user document
+    // Users collection - allow reading for collaboration features
     match /users/{userId} {
-      allow read: if isAuthenticated() && isOwner(userId);
+      // Allow reading any user document for collaboration features (finding users by email)
+      allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isOwner(userId) && hasValidUserData();
       allow update: if isAuthenticated() && isOwner(userId) && hasValidUserData();
       allow delete: if false; // Prevent user deletion through Firestore
@@ -74,7 +74,11 @@ service cloud.firestore {
       // Update access for owners and collaborators with simplified validation
       allow update: if isAuthenticated() && 
         (isOwner(resource.data.ownerId) || isCollaborator(resource.data.collaboratorIds)) &&
-        isValidTripUpdate();
+        isValidTripUpdate() &&
+        // Allow owners to modify collaborator list
+        (isOwner(resource.data.ownerId) || 
+         // Collaborators can only update if they're not changing the collaborator list
+         (request.resource.data.collaboratorIds == resource.data.collaboratorIds));
       
       // Delete access - only owners can delete trips
       allow delete: if isAuthenticated() && isOwner(resource.data.ownerId);
@@ -85,18 +89,18 @@ service cloud.firestore {
       // Read access for users who can access the associated trip
       allow read: if isAuthenticated() && 
         exists(/databases/$(database)/documents/trips/$(resource.data.tripId)) &&
-        canAccessTrip(resource.data.tripId);
+        canAccessTrip(get(/databases/$(database)/documents/trips/$(resource.data.tripId)).data);
       
       // Create access for users who can access the associated trip
       allow create: if isAuthenticated() && 
         exists(/databases/$(database)/documents/trips/$(request.resource.data.tripId)) &&
-        canAccessTrip(request.resource.data.tripId) &&
+        canAccessTrip(get(/databases/$(database)/documents/trips/$(request.resource.data.tripId)).data) &&
         hasValidActivityData();
       
       // Update access for users who can access the associated trip
       allow update: if isAuthenticated() && 
         exists(/databases/$(database)/documents/trips/$(resource.data.tripId)) &&
-        canAccessTrip(resource.data.tripId) &&
+        canAccessTrip(get(/databases/$(database)/documents/trips/$(resource.data.tripId)).data) &&
         // Ensure critical fields are not changed inappropriately
         (request.resource.data.tripId == resource.data.tripId || !('tripId' in request.resource.data.keys())) &&
         (request.resource.data.id == resource.data.id || !('id' in request.resource.data.keys()));
@@ -105,7 +109,7 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && 
         exists(/databases/$(database)/documents/trips/$(resource.data.tripId)) &&
         (isOwner(resource.data.createdBy) || 
-         isOwner(get(/databases/$(database)/documents/trips/$(resource.data.tripId)).data.ownerId));
+         canAccessTrip(get(/databases/$(database)/documents/trips/$(resource.data.tripId)).data));
     }
     
     // Test collection for connection testing (allow authenticated users to read/write)

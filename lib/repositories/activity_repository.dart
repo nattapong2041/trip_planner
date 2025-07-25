@@ -27,6 +27,22 @@ abstract class ActivityRepository {
   /// Returns the updated activity without the brainstorm idea
   Future<Activity> removeBrainstormIdea(String activityId, String ideaId);
   
+  /// Reorder brainstorm ideas within an activity
+  /// Updates the order field of brainstorm ideas for real-time synchronization
+  Future<Activity> reorderBrainstormIdeas(String activityId, List<String> ideaIds);
+  
+  /// Assign activity to day with time slot
+  /// Updates assignedDay, dayOrder, and timeSlot for real-time synchronization
+  Future<Activity> assignActivityToDay(String activityId, String day, int dayOrder, {String? timeSlot});
+  
+  /// Move activity to pool (unassign from day)
+  /// Clears assignedDay, dayOrder, and timeSlot for real-time synchronization
+  Future<Activity> moveActivityToPool(String activityId);
+  
+  /// Reorder activities within a day
+  /// Updates dayOrder for all activities in the day for real-time synchronization
+  Future<void> reorderActivitiesInDay(String tripId, String day, List<String> activityIds);
+  
   /// Get a single activity by ID
   /// Returns null if activity doesn't exist
   Future<Activity?> getActivityById(String activityId);

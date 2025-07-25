@@ -77,7 +77,7 @@ final class TripListNotifierProvider
   TripListNotifier create() => TripListNotifier();
 }
 
-String _$tripListNotifierHash() => r'563ef5bb4178762d1f8b0a9a010f063a8b07838b';
+String _$tripListNotifierHash() => r'af8c57434b619cc04e5f4ee3362c16f8f983a8f3';
 
 abstract class _$TripListNotifier extends $StreamNotifier<List<Trip>> {
   Stream<List<Trip>> build();
@@ -140,7 +140,7 @@ final class TripDetailNotifierProvider
 }
 
 String _$tripDetailNotifierHash() =>
-    r'f5aba9e21032eaccf3476b13e7dc989f408f2259';
+    r'e2049b80b0ecd359228e35b4aa1aca88511dfb2f';
 
 /// Provider for getting a single trip by ID
 final class TripDetailNotifierFamily extends $Family
@@ -183,6 +183,101 @@ abstract class _$TripDetailNotifier extends $AsyncNotifier<Trip?> {
     final element = ref.element as $ClassProviderElement<
         AnyNotifier<AsyncValue<Trip?>, Trip?>,
         AsyncValue<Trip?>,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
+}
+
+/// Provider for getting trip collaborators
+@ProviderFor(TripCollaboratorsNotifier)
+const tripCollaboratorsNotifierProvider = TripCollaboratorsNotifierFamily._();
+
+/// Provider for getting trip collaborators
+final class TripCollaboratorsNotifierProvider
+    extends $AsyncNotifierProvider<TripCollaboratorsNotifier, List<User>> {
+  /// Provider for getting trip collaborators
+  const TripCollaboratorsNotifierProvider._(
+      {required TripCollaboratorsNotifierFamily super.from,
+      required String super.argument})
+      : super(
+          retry: null,
+          name: r'tripCollaboratorsNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$tripCollaboratorsNotifierHash();
+
+  @override
+  String toString() {
+    return r'tripCollaboratorsNotifierProvider'
+        ''
+        '($argument)';
+  }
+
+  @$internal
+  @override
+  TripCollaboratorsNotifier create() => TripCollaboratorsNotifier();
+
+  @override
+  bool operator ==(Object other) {
+    return other is TripCollaboratorsNotifierProvider &&
+        other.argument == argument;
+  }
+
+  @override
+  int get hashCode {
+    return argument.hashCode;
+  }
+}
+
+String _$tripCollaboratorsNotifierHash() =>
+    r'22c45423440776fa113a2ab5f1e73071ab76f745';
+
+/// Provider for getting trip collaborators
+final class TripCollaboratorsNotifierFamily extends $Family
+    with
+        $ClassFamilyOverride<TripCollaboratorsNotifier, AsyncValue<List<User>>,
+            List<User>, FutureOr<List<User>>, String> {
+  const TripCollaboratorsNotifierFamily._()
+      : super(
+          retry: null,
+          name: r'tripCollaboratorsNotifierProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  /// Provider for getting trip collaborators
+  TripCollaboratorsNotifierProvider call(
+    String tripId,
+  ) =>
+      TripCollaboratorsNotifierProvider._(argument: tripId, from: this);
+
+  @override
+  String toString() => r'tripCollaboratorsNotifierProvider';
+}
+
+abstract class _$TripCollaboratorsNotifier extends $AsyncNotifier<List<User>> {
+  late final _$args = ref.$arg as String;
+  String get tripId => _$args;
+
+  FutureOr<List<User>> build(
+    String tripId,
+  );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(
+      _$args,
+    );
+    final ref = this.ref as $Ref<AsyncValue<List<User>>, List<User>>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<AsyncValue<List<User>>, List<User>>,
+        AsyncValue<List<User>>,
         Object?,
         Object?>;
     element.handleValue(ref, created);

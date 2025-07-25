@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
 import '../models/trip.dart';
+import '../models/user.dart';
+import '../services/user_service.dart';
 
 import 'trip_repository.dart';
 
@@ -12,7 +14,6 @@ class FirebaseTripRepository implements TripRepository {
   
   // Collection references
   static const String _tripsCollection = 'trips';
-  static const String _usersCollection = 'users';
   
   @override
   Stream<List<Trip>> getUserTrips(String userId) {
@@ -56,7 +57,7 @@ class FirebaseTripRepository implements TripRepository {
       final tripData = trip.copyWith(
         createdAt: now,
         updatedAt: now,
-      ).toJson();
+      ).toFirestoreJson();
       
       // Remove the ID field as Firestore will generate it
       tripData.remove('id');
@@ -89,7 +90,7 @@ class FirebaseTripRepository implements TripRepository {
       }
       
       final updatedTrip = trip.copyWith(updatedAt: DateTime.now());
-      final tripData = updatedTrip.toJson();
+      final tripData = updatedTrip.toFirestoreJson();
       
       // Remove the ID field as it's not stored in the document
       tripData.remove('id');
@@ -152,18 +153,14 @@ class FirebaseTripRepository implements TripRepository {
         throw Exception('Email cannot be empty');
       }
       
-      // First, find the user by email
-      final userQuery = await _firestore
-          .collection(_usersCollection)
-          .where('email', isEqualTo: email)
-          .limit(1)
-          .get();
+      // First, find the user by email using UserService
+      final user = await UserService.getUserByEmail(email);
       
-      if (userQuery.docs.isEmpty) {
-        throw Exception('User not found with email: $email');
+      if (user == null) {
+        throw Exception('User with email "$email" not found. They need to sign up for the app first before they can be added as a collaborator.');
       }
       
-      final userId = userQuery.docs.first.id;
+      final userId = user.id;
       
       // Get the current trip to check if user is already a collaborator
       final tripDoc = await _firestore
@@ -234,6 +231,97 @@ class FirebaseTripRepository implements TripRepository {
     } catch (e) {
       _logger.e('Error getting trip by ID: $e');
       throw Exception('Failed to get trip: $e');
+    }
+  }
+  
+  @override
+  Future<List<User>> getTripCollaborators(String tripId) async {
+    try {
+      _logger.d('Getting collaborators for trip: $tripId');
+      
+      if (tripId.isEmpty) {
+        throw Exception('Trip ID cannot be empty');
+      }
+      
+      // Get the trip to get owner and collaborator IDs
+      final tripDoc = await _firestore
+          .collection(_tripsCollection)
+          .doc(tripId)
+          .get();
+      
+      if (!tripDoc.exists) {
+        throw Exception('Trip not found');
+      }
+      
+      final tripData = tripDoc.data()!;
+      final ownerId = tripData['ownerId'] as String;
+      final collaboratorIds = List<String>.from(tripData['collaboratorIds'] ?? []);
+      
+      // Combine owner and collaborators
+      final allUserIds = {ownerId, ...collaboratorIds}.toList();
+      
+      if (allUserIds.isEmpty) {
+        return [];
+      }
+      
+      // Get user documents for all IDs using UserService
+      final users = await UserService.getUsersByIds(allUserIds);
+      
+      _logger.d('Retrieved ${users.length} collaborators for trip $tripId');
+      
+      return users;
+    } catch (e) {
+      _logger.e('Error getting trip collaborators: $e');
+      throw Exception('Failed to get trip collaborators: $e');
+    }
+  }
+  
+  @override
+  Future<void> removeCollaborator(String tripId, String userId) async {
+    try {
+      _logger.d('Removing collaborator $userId from trip: $tripId');
+      
+      if (tripId.isEmpty) {
+        throw Exception('Trip ID cannot be empty');
+      }
+      
+      if (userId.isEmpty) {
+        throw Exception('User ID cannot be empty');
+      }
+      
+      // Get the current trip
+      final tripDoc = await _firestore
+          .collection(_tripsCollection)
+          .doc(tripId)
+          .get();
+      
+      if (!tripDoc.exists) {
+        throw Exception('Trip not found');
+      }
+      
+      final tripData = tripDoc.data()!;
+      final collaboratorIds = List<String>.from(tripData['collaboratorIds'] ?? []);
+      
+      // Check if user is the owner
+      if (tripData['ownerId'] == userId) {
+        throw Exception('Cannot remove the trip owner');
+      }
+      
+      // Remove the user from collaborators
+      collaboratorIds.remove(userId);
+      
+      await _firestore
+          .collection(_tripsCollection)
+          .doc(tripId)
+          .update({
+        'collaboratorIds': collaboratorIds,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      _logger.i('Collaborator $userId removed from trip: $tripId');
+    } catch (e) {
+      _logger.e('Error removing collaborator: $e');
+      rethrow;
     }
   }
 }

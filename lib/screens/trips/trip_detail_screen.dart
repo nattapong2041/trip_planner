@@ -4,12 +4,14 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../providers/trip_provider.dart';
 import '../../providers/activity_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../models/trip.dart';
 import '../../models/activity.dart';
 import '../../utils/responsive.dart';
 import '../../widgets/activity/enhanced_draggable_activity_card.dart';
 import '../../widgets/common/responsive_error_display.dart';
 import '../../widgets/trip/day_timeline_view.dart';
+import '../../widgets/trip/collaborator_management_widget.dart';
 
 part 'trip_detail_screen.g.dart';
 
@@ -241,13 +243,16 @@ class _DesktopTripDetailView extends ConsumerWidget {
   }
 }
 
-class _TripInfoHeader extends StatelessWidget {
+class _TripInfoHeader extends ConsumerWidget {
   const _TripInfoHeader({required this.trip});
 
   final Trip trip;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUser = ref.watch(authNotifierProvider).value;
+    final isOwner = currentUser?.id == trip.ownerId;
+    
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(Responsive.getSpacing(context)),
@@ -270,19 +275,34 @@ class _TripInfoHeader extends StatelessWidget {
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const Spacer(),
-              if (trip.collaboratorIds.isNotEmpty) ...[
-                Icon(
-                  Icons.group,
-                  color: Theme.of(context).colorScheme.primary,
-                  size: Responsive.getIconSize(context, baseSize: 20),
+              
+              // Collaborators info with management button
+              GestureDetector(
+                onTap: () => _showCollaboratorManagement(context),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.group,
+                      color: Theme.of(context).colorScheme.primary,
+                      size: Responsive.getIconSize(context, baseSize: 20),
+                    ),
+                    SizedBox(width: Responsive.getSpacing(context, baseSpacing: 4.0)),
+                    Text(
+                      '${trip.collaboratorIds.length + 1}',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    if (isOwner) ...[
+                      SizedBox(width: Responsive.getSpacing(context, baseSpacing: 4.0)),
+                      Icon(
+                        Icons.settings,
+                        size: Responsive.getIconSize(context, baseSize: 16),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
+                    ],
+                  ],
                 ),
-                SizedBox(
-                    width: Responsive.getSpacing(context, baseSpacing: 4.0)),
-                Text(
-                  '${trip.collaboratorIds.length + 1}',
-                  style: Theme.of(context).textTheme.titleMedium,
-                ),
-              ],
+              ),
             ],
           ),
           SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
@@ -299,6 +319,25 @@ class _TripInfoHeader extends StatelessWidget {
 
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
+  }
+  
+  void _showCollaboratorManagement(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Container(
+          width: Responsive.getDialogWidth(context),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.8,
+          ),
+          child: CollaboratorManagementWidget(
+            tripId: trip.id,
+            ownerId: trip.ownerId,
+            trip: trip,
+          ),
+        ),
+      ),
+    );
   }
 }
 

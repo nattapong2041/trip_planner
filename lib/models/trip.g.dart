@@ -14,8 +14,8 @@ _Trip _$TripFromJson(Map<String, dynamic> json) => _Trip(
       collaboratorIds: (json['collaboratorIds'] as List<dynamic>)
           .map((e) => e as String)
           .toList(),
-      createdAt: DateTime.parse(json['createdAt'] as String),
-      updatedAt: DateTime.parse(json['updatedAt'] as String),
+      createdAt: const TimestampConverter().fromJson(json['createdAt']),
+      updatedAt: const TimestampConverter().fromJson(json['updatedAt']),
     );
 
 Map<String, dynamic> _$TripToJson(_Trip instance) => <String, dynamic>{
@@ -24,6 +24,6 @@ Map<String, dynamic> _$TripToJson(_Trip instance) => <String, dynamic>{
       'durationDays': instance.durationDays,
       'ownerId': instance.ownerId,
       'collaboratorIds': instance.collaboratorIds,
-      'createdAt': instance.createdAt.toIso8601String(),
-      'updatedAt': instance.updatedAt.toIso8601String(),
+      'createdAt': const TimestampConverter().toJson(instance.createdAt),
+      'updatedAt': const TimestampConverter().toJson(instance.updatedAt),
     };

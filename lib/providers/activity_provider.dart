@@ -330,6 +330,22 @@ class ActivityListNotifier extends _$ActivityListNotifier {
     }
   }
   
+  /// Reorder brainstorm ideas within an activity for real-time collaboration
+  Future<void> reorderBrainstormIdeas(String activityId, List<String> ideaIds) async {
+    try {
+      final activityRepository = ref.read(activityRepositoryProvider);
+      await activityRepository.reorderBrainstormIdeas(activityId, ideaIds);
+      // The stream will automatically update with the new order
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Brainstorm ideas reordered successfully!');
+    } catch (error) {
+      final appError = _handleActivityError(error);
+      ref.read(errorNotifierProvider.notifier).showError(appError);
+      rethrow;
+    }
+  }
+  
   /// Helper method to convert exceptions to AppError
   AppError _handleActivityError(Object error) {
     if (error.toString().contains('network')) {

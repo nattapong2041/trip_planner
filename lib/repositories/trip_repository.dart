@@ -1,4 +1,5 @@
 import '../models/trip.dart';
+import '../models/user.dart';
 
 /// Abstract repository interface for trip management operations
 abstract class TripRepository {
@@ -25,4 +26,12 @@ abstract class TripRepository {
   /// Get a single trip by ID
   /// Returns null if trip doesn't exist or user doesn't have access
   Future<Trip?> getTripById(String tripId);
+  
+  /// Get collaborator information for a trip
+  /// Returns list of User objects for all collaborators including owner
+  Future<List<User>> getTripCollaborators(String tripId);
+  
+  /// Remove a collaborator from a trip
+  /// Removes the user from the trip's collaborator list
+  Future<void> removeCollaborator(String tripId, String userId);
 }

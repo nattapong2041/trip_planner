@@ -51,7 +51,7 @@ final class ActivityRepositoryProvider extends $FunctionalProvider<
 }
 
 String _$activityRepositoryHash() =>
-    r'd2526762e4c5800c523f28d931f5b58d1cda80d3';
+    r'fa14f3c5ef87fa0bccceb49a81b745ee61b9cc2f';
 
 /// Notifier for managing activities for a specific trip
 @ProviderFor(ActivityListNotifier)

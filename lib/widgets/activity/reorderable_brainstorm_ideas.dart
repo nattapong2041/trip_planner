@@ -35,8 +35,27 @@ class _ReorderableBrainstormIdeasState extends ConsumerState<ReorderableBrainsto
 
   @override
   Widget build(BuildContext context) {
+    // Watch the activity list to get real-time updates
+    final activitiesAsync = ref.watch(activityListNotifierProvider(widget.activity.tripId));
+    
+    return activitiesAsync.when(
+      data: (activities) {
+        // Find the current activity from the stream
+        final currentActivity = activities.firstWhere(
+          (a) => a.id == widget.activity.id,
+          orElse: () => widget.activity, // Fallback to the original activity
+        );
+        
+        return _buildContent(currentActivity);
+      },
+      loading: () => _buildContent(widget.activity),
+      error: (error, stack) => _buildContent(widget.activity),
+    );
+  }
+
+  Widget _buildContent(Activity activity) {
     // Sort brainstorm ideas by order field for consistent display
-    final sortedIdeas = [...widget.activity.brainstormIdeas]
+    final sortedIdeas = [...activity.brainstormIdeas]
       ..sort((a, b) => a.order.compareTo(b.order));
 
     return Column(
@@ -125,40 +144,40 @@ class _ReorderableBrainstormIdeasState extends ConsumerState<ReorderableBrainsto
             ),
           )
         else if (widget.allowReordering)
-          _buildReorderableList(sortedIdeas)
+          _buildReorderableList(sortedIdeas, activity)
         else
-          _buildStaticList(sortedIdeas),
+          _buildStaticList(sortedIdeas, activity),
       ],
     );
   }
 
-  Widget _buildReorderableList(List<BrainstormIdea> ideas) {
+  Widget _buildReorderableList(List<BrainstormIdea> ideas, Activity activity) {
     return ReorderableListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: ideas.length,
-      onReorder: _reorderIdeas,
+      onReorder: (oldIndex, newIndex) => _reorderIdeas(oldIndex, newIndex, activity),
       itemBuilder: (context, index) {
         final idea = ideas[index];
-        return _buildIdeaItem(idea, index, key: ValueKey(idea.id));
+        return _buildIdeaItem(idea, index, activity, key: ValueKey(idea.id));
       },
     );
   }
 
-  Widget _buildStaticList(List<BrainstormIdea> ideas) {
+  Widget _buildStaticList(List<BrainstormIdea> ideas, Activity activity) {
     return Column(
       children: ideas.asMap().entries.map((entry) {
         final index = entry.key;
         final idea = entry.value;
-        return _buildIdeaItem(idea, index);
+        return _buildIdeaItem(idea, index, activity);
       }).toList(),
     );
   }
 
-  Widget _buildIdeaItem(BrainstormIdea idea, int index, {Key? key}) {
+  Widget _buildIdeaItem(BrainstormIdea idea, int index, Activity activity, {Key? key}) {
     final currentUser = ref.watch(authNotifierProvider).value;
     final canDelete = widget.allowEditing && 
-                     (currentUser?.id == idea.createdBy || currentUser?.id == widget.activity.createdBy);
+                     (currentUser?.id == idea.createdBy || currentUser?.id == activity.createdBy);
 
     return Container(
       key: key,
@@ -168,7 +187,7 @@ class _ReorderableBrainstormIdeasState extends ConsumerState<ReorderableBrainsto
         description: idea.description,
         createdBy: idea.createdBy,
         createdAt: idea.createdAt,
-        tripId: widget.activity.tripId,
+        tripId: activity.tripId,
         onDelete: canDelete ? () => _deleteIdea(idea.id) : null,
       ),
     );
@@ -228,13 +247,13 @@ class _ReorderableBrainstormIdeasState extends ConsumerState<ReorderableBrainsto
     }
   }
 
-  Future<void> _reorderIdeas(int oldIndex, int newIndex) async {
+  Future<void> _reorderIdeas(int oldIndex, int newIndex, Activity activity) async {
     if (oldIndex < newIndex) {
       newIndex -= 1;
     }
 
     // Create a copy of the sorted ideas list
-    final ideas = [...widget.activity.brainstormIdeas]
+    final ideas = [...activity.brainstormIdeas]
       ..sort((a, b) => a.order.compareTo(b.order));
     
     // Reorder the list locally

@@ -22,6 +22,7 @@ mixin _$Activity {
   String? get notes;
   String? get assignedDay; // null if in activity pool
   int? get dayOrder;
+  String? get timeSlot; // e.g., "09:00", "14:30" - time for the activity
   String get createdBy;
   DateTime get createdAt;
   List<BrainstormIdea> get brainstormIdeas;
@@ -52,6 +53,8 @@ mixin _$Activity {
                 other.assignedDay == assignedDay) &&
             (identical(other.dayOrder, dayOrder) ||
                 other.dayOrder == dayOrder) &&
+            (identical(other.timeSlot, timeSlot) ||
+                other.timeSlot == timeSlot) &&
             (identical(other.createdBy, createdBy) ||
                 other.createdBy == createdBy) &&
             (identical(other.createdAt, createdAt) ||
@@ -72,13 +75,14 @@ mixin _$Activity {
       notes,
       assignedDay,
       dayOrder,
+      timeSlot,
       createdBy,
       createdAt,
       const DeepCollectionEquality().hash(brainstormIdeas));
 
   @override
   String toString() {
-    return 'Activity(id: $id, tripId: $tripId, place: $place, activityType: $activityType, price: $price, notes: $notes, assignedDay: $assignedDay, dayOrder: $dayOrder, createdBy: $createdBy, createdAt: $createdAt, brainstormIdeas: $brainstormIdeas)';
+    return 'Activity(id: $id, tripId: $tripId, place: $place, activityType: $activityType, price: $price, notes: $notes, assignedDay: $assignedDay, dayOrder: $dayOrder, timeSlot: $timeSlot, createdBy: $createdBy, createdAt: $createdAt, brainstormIdeas: $brainstormIdeas)';
   }
 }
 
@@ -96,6 +100,7 @@ abstract mixin class $ActivityCopyWith<$Res> {
       String? notes,
       String? assignedDay,
       int? dayOrder,
+      String? timeSlot,
       String createdBy,
       DateTime createdAt,
       List<BrainstormIdea> brainstormIdeas});
@@ -121,6 +126,7 @@ class _$ActivityCopyWithImpl<$Res> implements $ActivityCopyWith<$Res> {
     Object? notes = freezed,
     Object? assignedDay = freezed,
     Object? dayOrder = freezed,
+    Object? timeSlot = freezed,
     Object? createdBy = null,
     Object? createdAt = null,
     Object? brainstormIdeas = null,
@@ -158,6 +164,10 @@ class _$ActivityCopyWithImpl<$Res> implements $ActivityCopyWith<$Res> {
           ? _self.dayOrder
           : dayOrder // ignore: cast_nullable_to_non_nullable
               as int?,
+      timeSlot: freezed == timeSlot
+          ? _self.timeSlot
+          : timeSlot // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdBy: null == createdBy
           ? _self.createdBy
           : createdBy // ignore: cast_nullable_to_non_nullable
@@ -276,6 +286,7 @@ extension ActivityPatterns on Activity {
             String? notes,
             String? assignedDay,
             int? dayOrder,
+            String? timeSlot,
             String createdBy,
             DateTime createdAt,
             List<BrainstormIdea> brainstormIdeas)?
@@ -294,6 +305,7 @@ extension ActivityPatterns on Activity {
             _that.notes,
             _that.assignedDay,
             _that.dayOrder,
+            _that.timeSlot,
             _that.createdBy,
             _that.createdAt,
             _that.brainstormIdeas);
@@ -326,6 +338,7 @@ extension ActivityPatterns on Activity {
             String? notes,
             String? assignedDay,
             int? dayOrder,
+            String? timeSlot,
             String createdBy,
             DateTime createdAt,
             List<BrainstormIdea> brainstormIdeas)
@@ -343,6 +356,7 @@ extension ActivityPatterns on Activity {
             _that.notes,
             _that.assignedDay,
             _that.dayOrder,
+            _that.timeSlot,
             _that.createdBy,
             _that.createdAt,
             _that.brainstormIdeas);
@@ -374,6 +388,7 @@ extension ActivityPatterns on Activity {
             String? notes,
             String? assignedDay,
             int? dayOrder,
+            String? timeSlot,
             String createdBy,
             DateTime createdAt,
             List<BrainstormIdea> brainstormIdeas)?
@@ -391,6 +406,7 @@ extension ActivityPatterns on Activity {
             _that.notes,
             _that.assignedDay,
             _that.dayOrder,
+            _that.timeSlot,
             _that.createdBy,
             _that.createdAt,
             _that.brainstormIdeas);
@@ -402,7 +418,7 @@ extension ActivityPatterns on Activity {
 
 /// @nodoc
 @JsonSerializable()
-class _Activity implements Activity {
+class _Activity extends Activity {
   const _Activity(
       {required this.id,
       required this.tripId,
@@ -412,10 +428,12 @@ class _Activity implements Activity {
       this.notes,
       this.assignedDay,
       this.dayOrder,
+      this.timeSlot,
       required this.createdBy,
       required this.createdAt,
       final List<BrainstormIdea> brainstormIdeas = const []})
-      : _brainstormIdeas = brainstormIdeas;
+      : _brainstormIdeas = brainstormIdeas,
+        super._();
   factory _Activity.fromJson(Map<String, dynamic> json) =>
       _$ActivityFromJson(json);
 
@@ -436,6 +454,9 @@ class _Activity implements Activity {
 // null if in activity pool
   @override
   final int? dayOrder;
+  @override
+  final String? timeSlot;
+// e.g., "09:00", "14:30" - time for the activity
   @override
   final String createdBy;
   @override
@@ -480,6 +501,8 @@ class _Activity implements Activity {
                 other.assignedDay == assignedDay) &&
             (identical(other.dayOrder, dayOrder) ||
                 other.dayOrder == dayOrder) &&
+            (identical(other.timeSlot, timeSlot) ||
+                other.timeSlot == timeSlot) &&
             (identical(other.createdBy, createdBy) ||
                 other.createdBy == createdBy) &&
             (identical(other.createdAt, createdAt) ||
@@ -500,13 +523,14 @@ class _Activity implements Activity {
       notes,
       assignedDay,
       dayOrder,
+      timeSlot,
       createdBy,
       createdAt,
       const DeepCollectionEquality().hash(_brainstormIdeas));
 
   @override
   String toString() {
-    return 'Activity(id: $id, tripId: $tripId, place: $place, activityType: $activityType, price: $price, notes: $notes, assignedDay: $assignedDay, dayOrder: $dayOrder, createdBy: $createdBy, createdAt: $createdAt, brainstormIdeas: $brainstormIdeas)';
+    return 'Activity(id: $id, tripId: $tripId, place: $place, activityType: $activityType, price: $price, notes: $notes, assignedDay: $assignedDay, dayOrder: $dayOrder, timeSlot: $timeSlot, createdBy: $createdBy, createdAt: $createdAt, brainstormIdeas: $brainstormIdeas)';
   }
 }
 
@@ -526,6 +550,7 @@ abstract mixin class _$ActivityCopyWith<$Res>
       String? notes,
       String? assignedDay,
       int? dayOrder,
+      String? timeSlot,
       String createdBy,
       DateTime createdAt,
       List<BrainstormIdea> brainstormIdeas});
@@ -551,6 +576,7 @@ class __$ActivityCopyWithImpl<$Res> implements _$ActivityCopyWith<$Res> {
     Object? notes = freezed,
     Object? assignedDay = freezed,
     Object? dayOrder = freezed,
+    Object? timeSlot = freezed,
     Object? createdBy = null,
     Object? createdAt = null,
     Object? brainstormIdeas = null,
@@ -588,6 +614,10 @@ class __$ActivityCopyWithImpl<$Res> implements _$ActivityCopyWith<$Res> {
           ? _self.dayOrder
           : dayOrder // ignore: cast_nullable_to_non_nullable
               as int?,
+      timeSlot: freezed == timeSlot
+          ? _self.timeSlot
+          : timeSlot // ignore: cast_nullable_to_non_nullable
+              as String?,
       createdBy: null == createdBy
           ? _self.createdBy
           : createdBy // ignore: cast_nullable_to_non_nullable

@@ -15,6 +15,7 @@ _Activity _$ActivityFromJson(Map<String, dynamic> json) => _Activity(
       notes: json['notes'] as String?,
       assignedDay: json['assignedDay'] as String?,
       dayOrder: (json['dayOrder'] as num?)?.toInt(),
+      timeSlot: json['timeSlot'] as String?,
       createdBy: json['createdBy'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
       brainstormIdeas: (json['brainstormIdeas'] as List<dynamic>?)
@@ -32,6 +33,7 @@ Map<String, dynamic> _$ActivityToJson(_Activity instance) => <String, dynamic>{
       'notes': instance.notes,
       'assignedDay': instance.assignedDay,
       'dayOrder': instance.dayOrder,
+      'timeSlot': instance.timeSlot,
       'createdBy': instance.createdBy,
       'createdAt': instance.createdAt.toIso8601String(),
       'brainstormIdeas': instance.brainstormIdeas,

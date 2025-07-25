@@ -49,9 +49,8 @@ class FirebaseActivityRepository implements ActivityRepository {
       _logger.d('Creating activity: ${activity.place}');
       
       final now = DateTime.now();
-      final activityData = activity.copyWith(
-        createdAt: now,
-      ).toJson();
+      final updatedActivity = activity.copyWith(createdAt: now);
+      final activityData = updatedActivity.toFirestoreJson();
       
       // Remove the ID field as Firestore will generate it
       activityData.remove('id');
@@ -63,10 +62,7 @@ class FirebaseActivityRepository implements ActivityRepository {
       _logger.i('Activity created with ID: ${docRef.id}');
       
       // Return the activity with the generated ID
-      return activity.copyWith(
-        id: docRef.id,
-        createdAt: now,
-      );
+      return updatedActivity.copyWith(id: docRef.id);
     } catch (e) {
       _logger.e('Error creating activity: $e');
       throw Exception('Failed to create activity: $e');
@@ -82,7 +78,7 @@ class FirebaseActivityRepository implements ActivityRepository {
         throw Exception('Activity ID cannot be empty for update');
       }
       
-      final activityData = activity.toJson();
+      final activityData = activity.toFirestoreJson();
       
       // Remove the ID field as it's not stored in the document
       activityData.remove('id');

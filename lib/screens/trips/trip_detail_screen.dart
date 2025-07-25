@@ -1,14 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../providers/trip_provider.dart';
 import '../../providers/activity_provider.dart';
 import '../../models/trip.dart';
 import '../../models/activity.dart';
 import '../../utils/responsive.dart';
-import '../../utils/responsive_gestures.dart';
 import '../../widgets/activity/enhanced_draggable_activity_card.dart';
 import '../../widgets/common/responsive_error_display.dart';
+import '../../widgets/trip/day_timeline_view.dart';
+
+part 'trip_detail_screen.g.dart';
+
+/// Provider for timeline view toggle state
+@riverpod
+class TimelineViewNotifier extends _$TimelineViewNotifier {
+  @override
+  bool build() => false;
+
+  void toggle() {
+    state = !state;
+  }
+
+  void setTimelineView(bool enabled) {
+    state = enabled;
+  }
+}
 
 class TripDetailScreen extends ConsumerWidget {
   const TripDetailScreen({
@@ -22,7 +40,6 @@ class TripDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final tripAsync = ref.watch(tripDetailNotifierProvider(tripId));
 
-    print(tripAsync.isLoading);
     return tripAsync.when(
       loading: () => const Scaffold(
         body: ResponsiveLoadingIndicator(message: 'Loading trip details...'),
@@ -72,6 +89,7 @@ class _MobileTripDetailView extends ConsumerWidget {
       appBar: AppBar(
         title: Text(trip.name),
         actions: [
+          _TimelineToggleButton(),
           _TripMenuButton(trip: trip),
         ],
       ),
@@ -80,11 +98,13 @@ class _MobileTripDetailView extends ConsumerWidget {
           _TripInfoHeader(trip: trip),
           Expanded(
             child: activitiesAsync.when(
-              loading: () => const ResponsiveLoadingIndicator(message: 'Loading activities...'),
+              loading: () => const ResponsiveLoadingIndicator(
+                  message: 'Loading activities...'),
               error: (error, stackTrace) => ResponsiveErrorDisplay(
                 error: error,
                 title: 'Failed to load activities',
-                onRetry: () => ref.refresh(activityListNotifierProvider(tripId)),
+                onRetry: () =>
+                    ref.refresh(activityListNotifierProvider(tripId)),
               ),
               data: (activities) => _MobileTripDaysView(
                 trip: trip,
@@ -127,6 +147,7 @@ class _TabletTripDetailView extends ConsumerWidget {
       appBar: AppBar(
         title: Text(trip.name),
         actions: [
+          _TimelineToggleButton(),
           _TripMenuButton(trip: trip),
         ],
       ),
@@ -187,6 +208,7 @@ class _DesktopTripDetailView extends ConsumerWidget {
             label: const Text('Add Activity'),
           ),
           const SizedBox(width: 8),
+          _TimelineToggleButton(),
           _TripMenuButton(trip: trip),
         ],
       ),
@@ -254,7 +276,8 @@ class _TripInfoHeader extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                   size: Responsive.getIconSize(context, baseSize: 20),
                 ),
-                SizedBox(width: Responsive.getSpacing(context, baseSpacing: 4.0)),
+                SizedBox(
+                    width: Responsive.getSpacing(context, baseSpacing: 4.0)),
                 Text(
                   '${trip.collaboratorIds.length + 1}',
                   style: Theme.of(context).textTheme.titleMedium,
@@ -266,8 +289,8 @@ class _TripInfoHeader extends StatelessWidget {
           Text(
             'Created ${_formatDate(trip.createdAt)}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: Theme.of(context).colorScheme.outline,
-            ),
+                  color: Theme.of(context).colorScheme.outline,
+                ),
           ),
         ],
       ),
@@ -313,7 +336,8 @@ class _TripMenuButton extends ConsumerWidget {
     );
   }
 
-  void _handleMenuAction(BuildContext context, WidgetRef ref, String action, Trip trip) {
+  void _handleMenuAction(
+      BuildContext context, WidgetRef ref, String action, Trip trip) {
     switch (action) {
       case 'edit':
         _showEditTripDialog(context, ref, trip);
@@ -326,7 +350,8 @@ class _TripMenuButton extends ConsumerWidget {
 
   void _showEditTripDialog(BuildContext context, WidgetRef ref, Trip trip) {
     final nameController = TextEditingController(text: trip.name);
-    final durationController = TextEditingController(text: trip.durationDays.toString());
+    final durationController =
+        TextEditingController(text: trip.durationDays.toString());
     final formKey = GlobalKey<FormState>();
     bool isLoading = false;
 
@@ -407,90 +432,110 @@ class _TripMenuButton extends ConsumerWidget {
               child: const Text('Cancel'),
             ),
             ElevatedButton(
-              onPressed: isLoading ? null : () async {
-                if (formKey.currentState!.validate()) {
-                  setState(() {
-                    isLoading = true;
-                  });
-                  
-                  try {
-                    final updatedTrip = trip.copyWith(
-                      name: nameController.text.trim(),
-                      durationDays: int.parse(durationController.text.trim()),
-                      updatedAt: DateTime.now(),
-                    );
-                    
-                    await ref.read(tripListNotifierProvider.notifier).updateTrip(updatedTrip);
-                    
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              Icon(
-                                Icons.check_circle,
-                                color: Theme.of(context).colorScheme.onPrimary,
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      if (formKey.currentState!.validate()) {
+                        setState(() {
+                          isLoading = true;
+                        });
+
+                        try {
+                          final updatedTrip = trip.copyWith(
+                            name: nameController.text.trim(),
+                            durationDays:
+                                int.parse(durationController.text.trim()),
+                            updatedAt: DateTime.now(),
+                          );
+
+                          await ref
+                              .read(tripListNotifierProvider.notifier)
+                              .updateTrip(updatedTrip);
+
+                          if (context.mounted) {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.check_circle,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onPrimary,
+                                    ),
+                                    SizedBox(
+                                        width: Responsive.getSpacing(context,
+                                            baseSpacing: 8.0)),
+                                    const Text('Trip updated successfully!'),
+                                  ],
+                                ),
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.primary,
+                                behavior: SnackBarBehavior.floating,
+                                margin: EdgeInsets.all(Responsive.getSpacing(
+                                    context,
+                                    baseSpacing: 8.0)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
-                              SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
-                              const Text('Trip updated successfully!'),
-                            ],
-                          ),
-                          backgroundColor: Theme.of(context).colorScheme.primary,
-                          behavior: SnackBarBehavior.floating,
-                          margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      );
-                      
-                      // Refresh trip details
-                      ref.invalidate(tripDetailNotifierProvider(trip.id));
-                    }
-                  } catch (error) {
-                    if (context.mounted) {
-                      setState(() {
-                        isLoading = false;
-                      });
-                      
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline,
-                                color: Theme.of(context).colorScheme.onError,
+                            );
+
+                            // Refresh trip details
+                            ref.invalidate(tripDetailNotifierProvider(trip.id));
+                          }
+                        } catch (error) {
+                          if (context.mounted) {
+                            setState(() {
+                              isLoading = false;
+                            });
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.error_outline,
+                                      color:
+                                          Theme.of(context).colorScheme.onError,
+                                    ),
+                                    SizedBox(
+                                        width: Responsive.getSpacing(context,
+                                            baseSpacing: 8.0)),
+                                    Expanded(
+                                      child: Text(
+                                          'Failed to update trip: ${error.toString()}'),
+                                    ),
+                                  ],
+                                ),
+                                backgroundColor:
+                                    Theme.of(context).colorScheme.error,
+                                behavior: SnackBarBehavior.floating,
+                                margin: EdgeInsets.all(Responsive.getSpacing(
+                                    context,
+                                    baseSpacing: 8.0)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                               ),
-                              SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
-                              Expanded(
-                                child: Text('Failed to update trip: ${error.toString()}'),
-                              ),
-                            ],
-                          ),
-                          backgroundColor: Theme.of(context).colorScheme.error,
-                          behavior: SnackBarBehavior.floating,
-                          margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                      );
-                    }
-                  }
-                }
-              },
+                            );
+                          }
+                        }
+                      }
+                    },
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  isLoading 
+                  isLoading
                       ? const SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save),
-                  SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
+                  SizedBox(
+                      width: Responsive.getSpacing(context, baseSpacing: 8.0)),
                   const Text('Save'),
                 ],
               ),
@@ -503,7 +548,7 @@ class _TripMenuButton extends ConsumerWidget {
 
   void _showDeleteTripDialog(BuildContext context, WidgetRef ref, Trip trip) {
     bool isLoading = false;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -524,7 +569,8 @@ class _TripMenuButton extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Are you sure you want to delete "${trip.name}"?'),
-              SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
+              SizedBox(
+                  height: Responsive.getSpacing(context, baseSpacing: 8.0)),
               Text(
                 'This action cannot be undone.',
                 style: TextStyle(
@@ -548,74 +594,91 @@ class _TripMenuButton extends ConsumerWidget {
                 backgroundColor: Theme.of(context).colorScheme.error,
                 foregroundColor: Theme.of(context).colorScheme.onError,
               ),
-              onPressed: isLoading ? null : () async {
-                setState(() {
-                  isLoading = true;
-                });
-                
-                try {
-                  await ref.read(tripListNotifierProvider.notifier).deleteTrip(trip.id);
-                  
-                  if (context.mounted) {
-                    Navigator.of(context).pop(); // Close dialog
-                    context.pop(); // Go back to trip list
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: Theme.of(context).colorScheme.onPrimary,
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      setState(() {
+                        isLoading = true;
+                      });
+
+                      try {
+                        await ref
+                            .read(tripListNotifierProvider.notifier)
+                            .deleteTrip(trip.id);
+
+                        if (context.mounted) {
+                          Navigator.of(context).pop(); // Close dialog
+                          context.pop(); // Go back to trip list
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    color:
+                                        Theme.of(context).colorScheme.onPrimary,
+                                  ),
+                                  SizedBox(
+                                      width: Responsive.getSpacing(context,
+                                          baseSpacing: 8.0)),
+                                  const Text('Trip deleted successfully'),
+                                ],
+                              ),
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.primary,
+                              behavior: SnackBarBehavior.floating,
+                              margin: EdgeInsets.all(Responsive.getSpacing(
+                                  context,
+                                  baseSpacing: 8.0)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                            SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
-                            const Text('Trip deleted successfully'),
-                          ],
-                        ),
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        behavior: SnackBarBehavior.floating,
-                        margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    );
-                  }
-                } catch (error) {
-                  if (context.mounted) {
-                    setState(() {
-                      isLoading = false;
-                    });
-                    
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            Icon(
-                              Icons.error_outline,
-                              color: Theme.of(context).colorScheme.onError,
+                          );
+                        }
+                      } catch (error) {
+                        if (context.mounted) {
+                          setState(() {
+                            isLoading = false;
+                          });
+
+                          Navigator.of(context).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Row(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    color:
+                                        Theme.of(context).colorScheme.onError,
+                                  ),
+                                  SizedBox(
+                                      width: Responsive.getSpacing(context,
+                                          baseSpacing: 8.0)),
+                                  Expanded(
+                                    child: Text(
+                                        'Failed to delete trip: ${error.toString()}'),
+                                  ),
+                                ],
+                              ),
+                              backgroundColor:
+                                  Theme.of(context).colorScheme.error,
+                              behavior: SnackBarBehavior.floating,
+                              margin: EdgeInsets.all(Responsive.getSpacing(
+                                  context,
+                                  baseSpacing: 8.0)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
                             ),
-                            SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
-                            Expanded(
-                              child: Text('Failed to delete trip: ${error.toString()}'),
-                            ),
-                          ],
-                        ),
-                        backgroundColor: Theme.of(context).colorScheme.error,
-                        behavior: SnackBarBehavior.floating,
-                        margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    );
-                  }
-                }
-              },
+                          );
+                        }
+                      }
+                    },
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  isLoading 
+                  isLoading
                       ? SizedBox(
                           width: 16,
                           height: 16,
@@ -625,7 +688,8 @@ class _TripMenuButton extends ConsumerWidget {
                           ),
                         )
                       : const Icon(Icons.delete_forever),
-                  SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
+                  SizedBox(
+                      width: Responsive.getSpacing(context, baseSpacing: 8.0)),
                   const Text('Delete'),
                 ],
               ),
@@ -679,7 +743,8 @@ class _MobileTripDaysView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groupedActivities = _groupActivitiesByDay(activities);
-    final unassignedActivities = activities.where((a) => a.assignedDay == null).toList();
+    final unassignedActivities =
+        activities.where((a) => a.assignedDay == null).toList();
 
     return ListView(
       padding: EdgeInsets.all(Responsive.getSpacing(context)),
@@ -687,7 +752,7 @@ class _MobileTripDaysView extends ConsumerWidget {
         // Activity Pool
         _ResponsiveDaySection(
           title: 'Activity Pool',
-          subtitle: unassignedActivities.isEmpty 
+          subtitle: unassignedActivities.isEmpty
               ? 'No unassigned activities'
               : '${unassignedActivities.length} ${unassignedActivities.length == 1 ? 'activity' : 'activities'}',
           icon: Icons.inventory_2_outlined,
@@ -698,20 +763,20 @@ class _MobileTripDaysView extends ConsumerWidget {
           isActivityPool: true,
         ),
         SizedBox(height: Responsive.getSpacing(context)),
-        
+
         // Day sections
         ...List.generate(trip.durationDays, (index) {
           final dayNumber = index + 1;
           final dayKey = 'day-$dayNumber';
           final dayActivities = groupedActivities[dayKey] ?? [];
-          
+
           return Padding(
             padding: EdgeInsets.only(
               bottom: Responsive.getSpacing(context),
             ),
             child: _ResponsiveDaySection(
               title: 'Day $dayNumber',
-              subtitle: dayActivities.isEmpty 
+              subtitle: dayActivities.isEmpty
                   ? 'No activities planned'
                   : '${dayActivities.length} ${dayActivities.length == 1 ? 'activity' : 'activities'}',
               icon: Icons.today,
@@ -734,12 +799,13 @@ class _MobileTripDaysView extends ConsumerWidget {
         grouped.putIfAbsent(activity.assignedDay!, () => []).add(activity);
       }
     }
-    
+
     // Sort activities within each day
     for (final dayActivities in grouped.values) {
-      dayActivities.sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
+      dayActivities
+          .sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
     }
-    
+
     return grouped;
   }
 }
@@ -759,7 +825,8 @@ class _TabletTripDaysView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groupedActivities = _groupActivitiesByDay(activities);
-    final unassignedActivities = activities.where((a) => a.assignedDay == null).toList();
+    final unassignedActivities =
+        activities.where((a) => a.assignedDay == null).toList();
 
     return Row(
       children: [
@@ -770,7 +837,7 @@ class _TabletTripDaysView extends ConsumerWidget {
             padding: EdgeInsets.all(Responsive.getSpacing(context)),
             child: _ResponsiveDaySection(
               title: 'Activity Pool',
-              subtitle: unassignedActivities.isEmpty 
+              subtitle: unassignedActivities.isEmpty
                   ? 'No unassigned activities'
                   : '${unassignedActivities.length} ${unassignedActivities.length == 1 ? 'activity' : 'activities'}',
               icon: Icons.inventory_2_outlined,
@@ -782,7 +849,7 @@ class _TabletTripDaysView extends ConsumerWidget {
             ),
           ),
         ),
-        
+
         // Right column - Days
         Expanded(
           flex: 2,
@@ -792,14 +859,14 @@ class _TabletTripDaysView extends ConsumerWidget {
               final dayNumber = index + 1;
               final dayKey = 'day-$dayNumber';
               final dayActivities = groupedActivities[dayKey] ?? [];
-              
+
               return Padding(
                 padding: EdgeInsets.only(
                   bottom: Responsive.getSpacing(context),
                 ),
                 child: _ResponsiveDaySection(
                   title: 'Day $dayNumber',
-                  subtitle: dayActivities.isEmpty 
+                  subtitle: dayActivities.isEmpty
                       ? 'No activities planned'
                       : '${dayActivities.length} ${dayActivities.length == 1 ? 'activity' : 'activities'}',
                   icon: Icons.today,
@@ -824,12 +891,13 @@ class _TabletTripDaysView extends ConsumerWidget {
         grouped.putIfAbsent(activity.assignedDay!, () => []).add(activity);
       }
     }
-    
+
     // Sort activities within each day
     for (final dayActivities in grouped.values) {
-      dayActivities.sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
+      dayActivities
+          .sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
     }
-    
+
     return grouped;
   }
 }
@@ -849,7 +917,8 @@ class _DesktopTripDaysView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final groupedActivities = _groupActivitiesByDay(activities);
-    final unassignedActivities = activities.where((a) => a.assignedDay == null).toList();
+    final unassignedActivities =
+        activities.where((a) => a.assignedDay == null).toList();
 
     return Row(
       children: [
@@ -860,7 +929,7 @@ class _DesktopTripDaysView extends ConsumerWidget {
             padding: EdgeInsets.all(Responsive.getSpacing(context)),
             child: _ResponsiveDaySection(
               title: 'Activity Pool',
-              subtitle: unassignedActivities.isEmpty 
+              subtitle: unassignedActivities.isEmpty
                   ? 'No unassigned activities'
                   : '${unassignedActivities.length} ${unassignedActivities.length == 1 ? 'activity' : 'activities'}',
               icon: Icons.inventory_2_outlined,
@@ -872,7 +941,7 @@ class _DesktopTripDaysView extends ConsumerWidget {
             ),
           ),
         ),
-        
+
         // Main content - Days in grid
         Expanded(
           child: GridView.builder(
@@ -888,10 +957,10 @@ class _DesktopTripDaysView extends ConsumerWidget {
               final dayNumber = index + 1;
               final dayKey = 'day-$dayNumber';
               final dayActivities = groupedActivities[dayKey] ?? [];
-              
+
               return _ResponsiveDaySection(
                 title: 'Day $dayNumber',
-                subtitle: dayActivities.isEmpty 
+                subtitle: dayActivities.isEmpty
                     ? 'No activities planned'
                     : '${dayActivities.length} ${dayActivities.length == 1 ? 'activity' : 'activities'}',
                 icon: Icons.today,
@@ -915,12 +984,13 @@ class _DesktopTripDaysView extends ConsumerWidget {
         grouped.putIfAbsent(activity.assignedDay!, () => []).add(activity);
       }
     }
-    
+
     // Sort activities within each day
     for (final dayActivities in grouped.values) {
-      dayActivities.sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
+      dayActivities
+          .sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
     }
-    
+
     return grouped;
   }
 }
@@ -962,19 +1032,20 @@ class _ResponsiveDaySection extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.primary,
                   size: Responsive.getIconSize(context, baseSize: 20),
                 ),
-                SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
+                SizedBox(
+                    width: Responsive.getSpacing(context, baseSpacing: 8.0)),
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const Spacer(),
                 Text(
                   subtitle,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.outline,
-                  ),
+                        color: Theme.of(context).colorScheme.outline,
+                      ),
                 ),
               ],
             ),
@@ -994,6 +1065,8 @@ class _ResponsiveDaySection extends ConsumerWidget {
   }
 
   Widget _buildActivityList(BuildContext context, WidgetRef ref) {
+    final isTimelineView = ref.watch(timelineViewNotifierProvider);
+
     if (isEmpty) {
       return SizedBox(
         height: 80,
@@ -1002,18 +1075,21 @@ class _ResponsiveDaySection extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                isActivityPool ? Icons.inventory_2_outlined : Icons.add_circle_outline,
+                isActivityPool
+                    ? Icons.inventory_2_outlined
+                    : Icons.add_circle_outline,
                 size: Responsive.getIconSize(context, baseSize: 24),
                 color: Theme.of(context).colorScheme.outline,
               ),
-              SizedBox(height: Responsive.getSpacing(context, baseSpacing: 4.0)),
+              SizedBox(
+                  height: Responsive.getSpacing(context, baseSpacing: 4.0)),
               Text(
-                isActivityPool 
+                isActivityPool
                     ? 'Drag activities here to unassign'
                     : 'Drag activities here to plan',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.outline,
-                ),
+                      color: Theme.of(context).colorScheme.outline,
+                    ),
                 textAlign: TextAlign.center,
               ),
             ],
@@ -1024,23 +1100,41 @@ class _ResponsiveDaySection extends ConsumerWidget {
 
     if (isActivityPool) {
       return Column(
-        children: activities.map((activity) => Padding(
-          padding: EdgeInsets.only(
-            bottom: Responsive.getSpacing(context, baseSpacing: 8.0),
-          ),
-          child: EnhancedDraggableActivityCard(
-            activity: activity,
-            onTap: () => _navigateToActivity(context, activity),
-            showDragHandle: true,
-          ),
-        )).toList(),
+        children: activities
+            .map((activity) => Padding(
+                  padding: EdgeInsets.only(
+                    bottom: Responsive.getSpacing(context, baseSpacing: 8.0),
+                  ),
+                  child: EnhancedDraggableActivityCard(
+                    activity: activity,
+                    onTap: () => _navigateToActivity(context, activity),
+                    showDragHandle: true,
+                  ),
+                ))
+            .toList(),
       );
     } else {
+      // Use timeline view for days when enabled
+      if (isTimelineView && dayKey != null) {
+        return DayTimelineView(
+          tripId: tripId,
+          day: dayKey!,
+          showTimeSlots: true,
+          onActivityTap: (activity) => _navigateToActivity(context, activity),
+          onActivityEdit: (activity) =>
+              _navigateToEditActivity(context, activity),
+          onActivityDelete: (activity) =>
+              _showDeleteActivityDialog(context, ref, activity),
+        );
+      }
+
+      // Default list view with reordering
       return ReorderableListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
         itemCount: activities.length,
-        onReorder: (oldIndex, newIndex) => _handleReorder(ref, oldIndex, newIndex),
+        onReorder: (oldIndex, newIndex) =>
+            _handleReorder(ref, oldIndex, newIndex),
         itemBuilder: (context, index) {
           final activity = activities[index];
           return Padding(
@@ -1069,32 +1163,99 @@ class _ResponsiveDaySection extends ConsumerWidget {
     );
   }
 
-  void _handleActivityDrop(BuildContext context, WidgetRef ref, Activity activity) async {
+  void _navigateToEditActivity(BuildContext context, Activity activity) {
+    context.goNamed(
+      'activity-edit',
+      pathParameters: {
+        'tripId': tripId,
+        'activityId': activity.id,
+      },
+    );
+  }
+
+  void _showDeleteActivityDialog(
+      BuildContext context, WidgetRef ref, Activity activity) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Activity'),
+        content: Text('Are you sure you want to delete "${activity.place}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              foregroundColor: Theme.of(context).colorScheme.onError,
+            ),
+            onPressed: () async {
+              try {
+                await ref
+                    .read(activityListNotifierProvider(tripId).notifier)
+                    .deleteActivity(activity.id);
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('${activity.place} deleted successfully'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              } catch (error) {
+                if (context.mounted) {
+                  Navigator.of(context).pop();
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete activity: $error'),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _handleActivityDrop(
+      BuildContext context, WidgetRef ref, Activity activity) async {
     try {
       if (isActivityPool) {
-        await ref.read(activityListNotifierProvider(tripId).notifier)
+        await ref
+            .read(activityListNotifierProvider(tripId).notifier)
             .moveActivityToPool(activity.id);
-        
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${activity.place} moved to activity pool'),
               behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
+              margin: EdgeInsets.all(
+                  Responsive.getSpacing(context, baseSpacing: 8.0)),
             ),
           );
         }
       } else {
         final newOrder = activities.length;
-        await ref.read(activityListNotifierProvider(tripId).notifier)
-            .moveActivityBetweenDays(activity.id, activity.assignedDay, dayKey!, newOrder);
-        
+        await ref
+            .read(activityListNotifierProvider(tripId).notifier)
+            .moveActivityBetweenDays(
+                activity.id, activity.assignedDay, dayKey!, newOrder);
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${activity.place} moved to $title'),
               behavior: SnackBarBehavior.floating,
-              margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
+              margin: EdgeInsets.all(
+                  Responsive.getSpacing(context, baseSpacing: 8.0)),
             ),
           );
         }
@@ -1106,7 +1267,8 @@ class _ResponsiveDaySection extends ConsumerWidget {
             content: Text('Failed to move activity: ${error.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
-            margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
+            margin: EdgeInsets.all(
+                Responsive.getSpacing(context, baseSpacing: 8.0)),
           ),
         );
       }
@@ -1123,7 +1285,8 @@ class _ResponsiveDaySection extends ConsumerWidget {
     reorderedActivities.insert(newIndex, activity);
 
     try {
-      await ref.read(activityListNotifierProvider(tripId).notifier)
+      await ref
+          .read(activityListNotifierProvider(tripId).notifier)
           .reorderActivitiesInDay(dayKey!, reorderedActivities);
     } catch (error) {
       // Error handling is done in the provider
@@ -1131,3 +1294,21 @@ class _ResponsiveDaySection extends ConsumerWidget {
   }
 }
 
+/// Toggle button for switching between timeline and list view
+class _TimelineToggleButton extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isTimelineView = ref.watch(timelineViewNotifierProvider);
+
+    return IconButton(
+      onPressed: () {
+        ref.read(timelineViewNotifierProvider.notifier).toggle();
+      },
+      icon: Icon(
+        isTimelineView ? Icons.view_list : Icons.schedule,
+      ),
+      tooltip:
+          isTimelineView ? 'Switch to List View' : 'Switch to Timeline View',
+    );
+  }
+}

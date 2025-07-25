@@ -101,8 +101,8 @@ class ActivityListNotifier extends _$ActivityListNotifier {
     }
   }
   
-  /// Assign an activity to a specific day
-  Future<void> assignActivityToDay(String activityId, String day, int dayOrder) async {
+  /// Assign an activity to a specific day with optional time slot
+  Future<void> assignActivityToDay(String activityId, String day, int dayOrder, {String? timeSlot}) async {
     try {
       final activityRepository = ref.read(activityRepositoryProvider);
       final activity = await activityRepository.getActivityById(activityId);
@@ -114,6 +114,7 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       final updatedActivity = activity.copyWith(
         assignedDay: day,
         dayOrder: dayOrder,
+        timeSlot: timeSlot,
       );
       
       await activityRepository.updateActivity(updatedActivity);
@@ -140,6 +141,7 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       final updatedActivity = activity.copyWith(
         assignedDay: null,
         dayOrder: null,
+        timeSlot: null, // Clear time slot when moving to pool
       );
       
       await activityRepository.updateActivity(updatedActivity);
@@ -153,14 +155,27 @@ class ActivityListNotifier extends _$ActivityListNotifier {
     }
   }
   
-  /// Reorder activities within a day
+  /// Reorder activities within a day with automatic time slot updates
   Future<void> reorderActivitiesInDay(String day, List<Activity> reorderedActivities) async {
     try {
       final activityRepository = ref.read(activityRepositoryProvider);
       
+      // Separate timed and untimed activities
+      final timedActivities = reorderedActivities.where((a) => a.timeSlot != null).toList();
+      final untimedActivities = reorderedActivities.where((a) => a.timeSlot == null).toList();
+      
+      // Sort timed activities by their time slots
+      timedActivities.sort((a, b) {
+        if (a.timeSlot == null || b.timeSlot == null) return 0;
+        return a.timeSlot!.compareTo(b.timeSlot!);
+      });
+      
+      // Combine: timed activities first (in chronological order), then untimed
+      final finalOrder = [...timedActivities, ...untimedActivities];
+      
       // Update each activity with its new order
-      for (int i = 0; i < reorderedActivities.length; i++) {
-        final activity = reorderedActivities[i];
+      for (int i = 0; i < finalOrder.length; i++) {
+        final activity = finalOrder[i];
         final updatedActivity = activity.copyWith(
           assignedDay: day,
           dayOrder: i,
@@ -170,6 +185,40 @@ class ActivityListNotifier extends _$ActivityListNotifier {
       
       // Show success message
       ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Activities reordered successfully!');
+    } catch (error) {
+      final appError = _handleActivityError(error);
+      ref.read(errorNotifierProvider.notifier).showError(appError);
+      rethrow;
+    }
+  }
+  
+  /// Update an activity's time slot and automatically reorder activities in the day
+  Future<void> updateActivityTimeSlot(String activityId, String? timeSlot) async {
+    try {
+      final activityRepository = ref.read(activityRepositoryProvider);
+      final activity = await activityRepository.getActivityById(activityId);
+      
+      if (activity == null) {
+        throw Exception('Activity not found');
+      }
+      
+      // Update the activity with the new time slot
+      final updatedActivity = activity.copyWith(timeSlot: timeSlot);
+      await activityRepository.updateActivity(updatedActivity);
+      
+      // If the activity is assigned to a day, reorder activities in that day
+      if (activity.assignedDay != null) {
+        final allActivities = await future;
+        final dayActivities = allActivities
+            .where((a) => a.assignedDay == activity.assignedDay)
+            .map((a) => a.id == activityId ? updatedActivity : a)
+            .toList();
+        
+        await reorderActivitiesInDay(activity.assignedDay!, dayActivities);
+      }
+      
+      // Show success message
+      ref.read(successNotifierProvider.notifier).showSuccessWithAutoClear('Time slot updated successfully!');
     } catch (error) {
       final appError = _handleActivityError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);

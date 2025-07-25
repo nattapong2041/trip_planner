@@ -75,6 +75,7 @@ abstract class Activity with _$Activity {
     String? notes,
     String? assignedDay, // null if in activity pool
     int? dayOrder,
+    String? timeSlot, // e.g., "09:00", "14:30" - time for the activity
     required String createdBy,
     required DateTime createdAt,
     required List<BrainstormIdea> brainstormIdeas,
@@ -90,6 +91,7 @@ abstract class BrainstormIdea with _$BrainstormIdea {
     required String description,
     required String createdBy,
     required DateTime createdAt,
+    required int order, // for reordering brainstorm ideas
   }) = _BrainstormIdea;
   
   factory BrainstormIdea.fromJson(Map<String, dynamic> json) => _$BrainstormIdeaFromJson(json);
@@ -133,6 +135,10 @@ abstract class ActivityRepository {
   Future<Activity> updateActivity(Activity activity);
   Future<void> deleteActivity(String activityId);
   Future<Activity> addBrainstormIdea(String activityId, BrainstormIdea idea);
+  Future<Activity> assignActivityToDay(String activityId, String day, String? timeSlot);
+  Future<Activity> moveActivityToPool(String activityId);
+  Future<void> reorderActivitiesInDay(String tripId, String day, List<String> activityIds);
+  Future<void> reorderBrainstormIdeas(String activityId, List<String> ideaIds);
 }
 ```
 
@@ -183,6 +189,154 @@ class ActivityListNotifier extends _$ActivityListNotifier {
   @override
   Stream<List<Activity>> build(String tripId) {
     return ref.read(activityRepositoryProvider).getTripActivities(tripId);
+  }
+  
+  Future<void> assignActivityToDay(String activityId, String day, String? timeSlot) async {
+    await ref.read(activityRepositoryProvider).assignActivityToDay(activityId, day, timeSlot);
+  }
+  
+  Future<void> moveActivityToPool(String activityId) async {
+    await ref.read(activityRepositoryProvider).moveActivityToPool(activityId);
+  }
+  
+  Future<void> reorderActivitiesInDay(String day, List<String> activityIds) async {
+    await ref.read(activityRepositoryProvider).reorderActivitiesInDay(tripId, day, activityIds);
+  }
+}
+
+// Drag and Drop Provider
+@riverpod
+class DragDropNotifier extends _$DragDropNotifier {
+  @override
+  DragDropState build() {
+    return const DragDropState();
+  }
+  
+  void startDrag(Activity activity) {
+    state = state.copyWith(draggedActivity: activity, isDragging: true);
+  }
+  
+  void endDrag() {
+    state = state.copyWith(draggedActivity: null, isDragging: false);
+  }
+  
+  Future<void> dropOnDay(String day, String? timeSlot) async {
+    if (state.draggedActivity != null) {
+      await ref.read(activityListNotifierProvider(state.draggedActivity!.tripId).notifier)
+          .assignActivityToDay(state.draggedActivity!.id, day, timeSlot);
+      endDrag();
+    }
+  }
+  
+  Future<void> dropOnPool() async {
+    if (state.draggedActivity != null) {
+      await ref.read(activityListNotifierProvider(state.draggedActivity!.tripId).notifier)
+          .moveActivityToPool(state.draggedActivity!.id);
+      endDrag();
+    }
+  }
+}
+
+@freezed
+class DragDropState with _$DragDropState {
+  const factory DragDropState({
+    Activity? draggedActivity,
+    @Default(false) bool isDragging,
+  }) = _DragDropState;
+}
+```
+
+### Drag and Drop Components
+
+```dart
+// Draggable Activity Card
+class DraggableActivityCard extends ConsumerWidget {
+  final Activity activity;
+  
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Draggable<Activity>(
+      data: activity,
+      feedback: ActivityCard(activity: activity, isDragging: true),
+      childWhenDragging: ActivityCard(activity: activity, isPlaceholder: true),
+      onDragStarted: () => ref.read(dragDropNotifierProvider.notifier).startDrag(activity),
+      onDragEnd: (_) => ref.read(dragDropNotifierProvider.notifier).endDrag(),
+      child: ActivityCard(activity: activity),
+    );
+  }
+}
+
+// Drop Target for Days
+class DayDropTarget extends ConsumerWidget {
+  final String day;
+  final List<Activity> activities;
+  
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return DragTarget<Activity>(
+      onAccept: (activity) async {
+        // Show time picker dialog
+        final timeSlot = await showTimePicker(context: context);
+        await ref.read(dragDropNotifierProvider.notifier)
+            .dropOnDay(day, timeSlot?.format(context));
+      },
+      builder: (context, candidateData, rejectedData) {
+        return Container(
+          decoration: BoxDecoration(
+            border: candidateData.isNotEmpty 
+                ? Border.all(color: Theme.of(context).primaryColor, width: 2)
+                : null,
+          ),
+          child: Column(
+            children: [
+              Text('Day ${day.split('-')[1]}'),
+              ...activities.map((activity) => DraggableActivityCard(activity: activity)),
+              if (candidateData.isNotEmpty)
+                Container(
+                  height: 60,
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  child: const Center(child: Text('Drop here')),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Activity Pool Drop Target
+class ActivityPoolDropTarget extends ConsumerWidget {
+  final List<Activity> poolActivities;
+  
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return DragTarget<Activity>(
+      onAccept: (activity) async {
+        await ref.read(dragDropNotifierProvider.notifier).dropOnPool();
+      },
+      builder: (context, candidateData, rejectedData) {
+        return Container(
+          decoration: BoxDecoration(
+            border: candidateData.isNotEmpty 
+                ? Border.all(color: Theme.of(context).primaryColor, width: 2)
+                : null,
+          ),
+          child: Column(
+            children: [
+              const Text('Activity Pool'),
+              ...poolActivities.map((activity) => DraggableActivityCard(activity: activity)),
+              if (candidateData.isNotEmpty)
+                Container(
+                  height: 60,
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  child: const Center(child: Text('Return to pool')),
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 ```
@@ -265,9 +419,10 @@ activities/
     - notes: string?
     - assignedDay: string? (e.g., "day-1", "day-2", null for activity pool)
     - dayOrder: number?
+    - timeSlot: string? (e.g., "09:00", "14:30" - 24-hour format)
     - createdBy: string
     - createdAt: timestamp
-    - brainstormIdeas: array<BrainstormIdea>
+    - brainstormIdeas: array<BrainstormIdea> (with order field for reordering)
 ```
 
 ### Security Rules
@@ -378,6 +533,127 @@ test/
     ├── auth_flow_test.dart
     ├── trip_management_test.dart
     └── collaboration_test.dart
+```
+
+## Time Slot Management
+
+### Time Slot Implementation
+
+```dart
+// Time Slot Utilities
+class TimeSlotUtils {
+  static String formatTimeSlot(String timeSlot) {
+    // Convert "09:00" to "9:00 AM"
+    final time = TimeOfDay.fromDateTime(DateTime.parse('2023-01-01 $timeSlot:00'));
+    return time.format(context);
+  }
+  
+  static List<Activity> sortActivitiesByTime(List<Activity> activities) {
+    return activities.where((a) => a.timeSlot != null).toList()
+      ..sort((a, b) => a.timeSlot!.compareTo(b.timeSlot!));
+  }
+  
+  static bool isValidTimeSlot(String timeSlot) {
+    final regex = RegExp(r'^([01]?[0-9]|2[0-3]):[0-5][0-9]$');
+    return regex.hasMatch(timeSlot);
+  }
+}
+
+// Time Slot Picker Widget
+class TimeSlotPicker extends StatelessWidget {
+  final String? initialTime;
+  final Function(String?) onTimeSelected;
+  
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        ListTile(
+          title: const Text('Set Time'),
+          subtitle: Text(initialTime ?? 'No time set'),
+          trailing: const Icon(Icons.access_time),
+          onTap: () async {
+            final time = await showTimePicker(
+              context: context,
+              initialTime: initialTime != null 
+                  ? TimeOfDay.fromDateTime(DateTime.parse('2023-01-01 $initialTime:00'))
+                  : TimeOfDay.now(),
+            );
+            if (time != null) {
+              final timeString = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+              onTimeSelected(timeString);
+            }
+          },
+        ),
+        if (initialTime != null)
+          TextButton(
+            onPressed: () => onTimeSelected(null),
+            child: const Text('Remove Time'),
+          ),
+      ],
+    );
+  }
+}
+```
+
+### Day View with Time Slots
+
+```dart
+class DayTimelineView extends ConsumerWidget {
+  final String tripId;
+  final String day;
+  
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activities = ref.watch(activityListNotifierProvider(tripId))
+        .value
+        ?.where((a) => a.assignedDay == day)
+        .toList() ?? [];
+    
+    final sortedActivities = TimeSlotUtils.sortActivitiesByTime(activities);
+    final untimedActivities = activities.where((a) => a.timeSlot == null).toList();
+    
+    return Column(
+      children: [
+        // Timed activities in chronological order
+        ...sortedActivities.map((activity) => TimeSlotActivityCard(activity: activity)),
+        
+        // Divider
+        if (sortedActivities.isNotEmpty && untimedActivities.isNotEmpty)
+          const Divider(),
+        
+        // Untimed activities
+        ...untimedActivities.map((activity) => DraggableActivityCard(activity: activity)),
+      ],
+    );
+  }
+}
+
+class TimeSlotActivityCard extends StatelessWidget {
+  final Activity activity;
+  
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: Text(
+          TimeSlotUtils.formatTimeSlot(activity.timeSlot!),
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        title: Text(activity.place),
+        subtitle: Text(activity.activityType),
+        trailing: IconButton(
+          icon: const Icon(Icons.edit_time),
+          onPressed: () => _editTimeSlot(context),
+        ),
+      ),
+    );
+  }
+  
+  void _editTimeSlot(BuildContext context) {
+    // Show time picker to edit time slot
+  }
+}
 ```
 
 ## Performance Considerations

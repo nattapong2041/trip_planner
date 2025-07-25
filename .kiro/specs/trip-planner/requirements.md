@@ -44,42 +44,56 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 
 ### Requirement 4
 
-**User Story:** As a user, I want to create activity cards with details, so that I can capture all relevant information about potential activities.
+**User Story:** As a user, I want to create activity cards in the activity pool, so that I can capture potential activities for the trip.
 
 #### Acceptance Criteria
 
 1. WHEN a user adds an activity THEN the system SHALL require a place name and activity type
 2. WHEN creating an activity card THEN the system SHALL allow optional price and notes fields
 3. WHEN an activity card is created THEN the system SHALL store it in the trip's activity pool
-4. WHEN viewing activity cards THEN the system SHALL display place, price, activity type, and notes
-5. WHEN multiple users add activities THEN the system SHALL show all activities from all collaborators
+4. WHEN viewing the activity pool THEN the system SHALL display all unassigned activities
+5. WHEN multiple users add activities THEN the system SHALL show all activities from all collaborators in the shared pool
 
 ### Requirement 5
 
-**User Story:** As a user and my friends, I want to brainstorm ideas within activities, so that we can collaboratively plan what to do at each location.
+**User Story:** As a user, I want to brainstorm ideas within activities with my friends, so that we can collaboratively plan what to do at each location.
 
 #### Acceptance Criteria
 
-1. WHEN a user opens an activity card THEN the system SHALL display a brainstorming section for sub-activities
-2. WHEN a user or friend adds a brainstorm idea THEN the system SHALL create a sub-activity item with description
+1. WHEN a user opens an activity card THEN the system SHALL display a list of brainstorm ideas for that activity
+2. WHEN a user or friend adds a brainstorm idea THEN the system SHALL create an idea item with description
 3. WHEN viewing brainstorm ideas THEN the system SHALL show who added each idea and when
-4. WHEN multiple users brainstorm simultaneously THEN the system SHALL update the list in real-time
-5. WHEN a brainstorm idea is added THEN the system SHALL allow editing by any collaborator
-6. IF an activity has brainstorm ideas THEN the system SHALL display a count indicator on the activity card
+4. WHEN a user reorders brainstorm ideas THEN the system SHALL maintain the new sequence
+5. WHEN multiple users brainstorm simultaneously THEN the system SHALL update the list in real-time
+6. WHEN a brainstorm idea is added THEN the system SHALL allow editing and reordering by any collaborator
 
 ### Requirement 6
 
-**User Story:** As a user, I want to organize activities into daily itineraries, so that I can create structured trip plans.
+**User Story:** As a user, I want to organize activities into daily itineraries with time slots, so that I can create structured trip plans with timing.
 
 #### Acceptance Criteria
 
-1. WHEN a user views a trip day THEN the system SHALL display assigned activities for that day
-2. WHEN a user assigns an activity to a day THEN the system SHALL move it from the activity pool to that day
-3. WHEN a user reorders activities within a day THEN the system SHALL maintain the new sequence
-4. WHEN a user removes an activity from a day THEN the system SHALL return it to the activity pool
-5. WHEN viewing a day plan THEN the system SHALL display activities in the assigned order
+1. WHEN a user views a trip day THEN the system SHALL display assigned activities with their time slots for that day
+2. WHEN a user drags an activity from the pool to a day THEN the system SHALL assign it to that day and remove it from the pool
+3. WHEN a user assigns an activity to a day THEN the system SHALL allow setting a time slot for the activity
+4. WHEN a user reorders activities within a day THEN the system SHALL maintain the new sequence and update time slots accordingly
+5. WHEN a user removes an activity from a day THEN the system SHALL return it to the activity pool
+6. WHEN viewing a day plan THEN the system SHALL display activities in chronological order by time slot
 
 ### Requirement 7
+
+**User Story:** As a user, I want to drag and drop activities between the pool and days, so that I can easily organize my trip itinerary.
+
+#### Acceptance Criteria
+
+1. WHEN a user drags an activity from the activity pool THEN the system SHALL allow dropping it on any trip day
+2. WHEN a user drops an activity on a day THEN the system SHALL assign the activity to that day and remove it from the pool
+3. WHEN a user drags an activity between days THEN the system SHALL move the activity to the target day
+4. WHEN a user drags an activity from a day back to the pool THEN the system SHALL unassign the activity and return it to the pool
+5. WHEN a user reorders activities within a day by dragging THEN the system SHALL update the sequence and time slots
+6. WHEN drag and drop operations occur THEN the system SHALL provide visual feedback during the drag operation
+
+### Requirement 8
 
 **User Story:** As a user, I want to access the app on web, mobile, and tablet, so that I can plan trips from any device.
 
@@ -91,7 +105,7 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 4. WHEN switching between devices THEN the system SHALL maintain data synchronization
 5. WHEN using touch devices THEN the system SHALL support touch gestures for drag-and-drop functionality
 
-### Requirement 8
+### Requirement 9
 
 **User Story:** As a user, I want my trip data to be automatically saved and synchronized, so that I don't lose my planning work.
 
@@ -103,7 +117,7 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 4. WHEN data conflicts occur THEN the system SHALL use last-write-wins resolution
 5. WHEN a user reopens the app THEN the system SHALL display the most recent data state
 
-### Requirement 9
+### Requirement 10
 
 **User Story:** As a user, I want a simple and intuitive interface, so that I can focus on planning rather than learning the app.
 

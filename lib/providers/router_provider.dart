@@ -5,7 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../models/user.dart';
 import '../screens/auth/auth_screen.dart';
 import '../screens/trips/trip_list_screen.dart';
-import '../screens/trips/responsive_trip_detail_screen.dart';
+import '../screens/trips/trip_detail_screen.dart';
 import '../screens/trips/trip_create_screen.dart';
 import '../screens/activities/activity_detail_screen.dart';
 import '../screens/activities/activity_create_screen.dart';
@@ -108,7 +108,7 @@ GoRouter router(Ref ref) {
             name: 'trip-detail',
             builder: (context, state) {
               final tripId = state.pathParameters['tripId']!;
-              return ResponsiveTripDetailScreen(tripId: tripId);
+              return TripDetailScreen(tripId: tripId);
             },
             routes: [
               GoRoute(

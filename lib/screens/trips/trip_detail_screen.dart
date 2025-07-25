@@ -5,6 +5,10 @@ import '../../providers/trip_provider.dart';
 import '../../providers/activity_provider.dart';
 import '../../models/trip.dart';
 import '../../models/activity.dart';
+import '../../utils/responsive.dart';
+import '../../utils/responsive_gestures.dart';
+import '../../widgets/activity/enhanced_draggable_activity_card.dart';
+import '../../widgets/common/responsive_error_display.dart';
 
 class TripDetailScreen extends ConsumerWidget {
   const TripDetailScreen({
@@ -17,41 +21,18 @@ class TripDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final tripAsync = ref.watch(tripDetailNotifierProvider(tripId));
-    final activitiesAsync = ref.watch(activityListNotifierProvider(tripId));
 
+    print(tripAsync.isLoading);
     return tripAsync.when(
       loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        body: ResponsiveLoadingIndicator(message: 'Loading trip details...'),
       ),
       error: (error, stack) => Scaffold(
         appBar: AppBar(title: const Text('Trip Details')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.error_outline,
-                size: 64,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Failed to load trip',
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                error.toString(),
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () => context.pop(),
-                child: const Text('Go Back'),
-              ),
-            ],
-          ),
+        body: ResponsiveErrorDisplay(
+          error: error,
+          title: 'Failed to load trip',
+          onRetry: () => context.pop(),
         ),
       ),
       data: (trip) {
@@ -64,133 +45,271 @@ class TripDetailScreen extends ConsumerWidget {
           );
         }
 
-        return Scaffold(
-          appBar: AppBar(
-            title: Text(trip.name),
-            actions: [
-              PopupMenuButton<String>(
-                onSelected: (value) => _handleMenuAction(context, ref, value, trip),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'edit',
-                    child: Row(
-                      children: [
-                        Icon(Icons.edit),
-                        SizedBox(width: 8),
-                        Text('Edit Trip'),
-                      ],
-                    ),
-                  ),
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Delete Trip', style: TextStyle(color: Colors.red)),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          body: Column(
-            children: [
-              // Trip Info Header
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.calendar_today,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${trip.durationDays} ${trip.durationDays == 1 ? 'day' : 'days'}',
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                        const Spacer(),
-                        if (trip.collaboratorIds.isNotEmpty) ...[
-                          Icon(
-                            Icons.group,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${trip.collaboratorIds.length + 1}',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Created ${_formatDate(trip.createdAt)}',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Day-by-day structure
-              Expanded(
-                child: activitiesAsync.when(
-                  loading: () => const Center(child: CircularProgressIndicator()),
-                  error: (error, stackTrace) => Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 32,
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Failed to load activities',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                      ],
-                    ),
-                  ),
-                  data: (activities) => _TripDaysView(
-                    trip: trip,
-                    activities: activities,
-                    onActivityTap: (activity) {
-                      context.goNamed(
-                        'activity-detail',
-                        pathParameters: {
-                          'tripId': tripId,
-                          'activityId': activity.id,
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
-          ),
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              context.goNamed(
-                'activity-create',
-                pathParameters: {'tripId': tripId},
-              );
-            },
-            child: const Icon(Icons.add),
-          ),
+        return ResponsiveBuilder(
+          mobile: _MobileTripDetailView(trip: trip, tripId: tripId),
+          tablet: _TabletTripDetailView(trip: trip, tripId: tripId),
+          desktop: _DesktopTripDetailView(trip: trip, tripId: tripId),
         );
       },
+    );
+  }
+}
+
+class _MobileTripDetailView extends ConsumerWidget {
+  const _MobileTripDetailView({
+    required this.trip,
+    required this.tripId,
+  });
+
+  final Trip trip;
+  final String tripId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activitiesAsync = ref.watch(activityListNotifierProvider(tripId));
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(trip.name),
+        actions: [
+          _TripMenuButton(trip: trip),
+        ],
+      ),
+      body: Column(
+        children: [
+          _TripInfoHeader(trip: trip),
+          Expanded(
+            child: activitiesAsync.when(
+              loading: () => const ResponsiveLoadingIndicator(message: 'Loading activities...'),
+              error: (error, stackTrace) => ResponsiveErrorDisplay(
+                error: error,
+                title: 'Failed to load activities',
+                onRetry: () => ref.refresh(activityListNotifierProvider(tripId)),
+              ),
+              data: (activities) => _MobileTripDaysView(
+                trip: trip,
+                activities: activities,
+                tripId: tripId,
+              ),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _navigateToCreateActivity(context),
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  void _navigateToCreateActivity(BuildContext context) {
+    context.goNamed(
+      'activity-create',
+      pathParameters: {'tripId': tripId},
+    );
+  }
+}
+
+class _TabletTripDetailView extends ConsumerWidget {
+  const _TabletTripDetailView({
+    required this.trip,
+    required this.tripId,
+  });
+
+  final Trip trip;
+  final String tripId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activitiesAsync = ref.watch(activityListNotifierProvider(tripId));
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(trip.name),
+        actions: [
+          _TripMenuButton(trip: trip),
+        ],
+      ),
+      body: ResponsiveContainer(
+        child: Column(
+          children: [
+            _TripInfoHeader(trip: trip),
+            Expanded(
+              child: activitiesAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => _ErrorView(error: error),
+                data: (activities) => _TabletTripDaysView(
+                  trip: trip,
+                  activities: activities,
+                  tripId: tripId,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _navigateToCreateActivity(context),
+        icon: const Icon(Icons.add),
+        label: const Text('Add Activity'),
+      ),
+    );
+  }
+
+  void _navigateToCreateActivity(BuildContext context) {
+    context.goNamed(
+      'activity-create',
+      pathParameters: {'tripId': tripId},
+    );
+  }
+}
+
+class _DesktopTripDetailView extends ConsumerWidget {
+  const _DesktopTripDetailView({
+    required this.trip,
+    required this.tripId,
+  });
+
+  final Trip trip;
+  final String tripId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final activitiesAsync = ref.watch(activityListNotifierProvider(tripId));
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(trip.name),
+        actions: [
+          ElevatedButton.icon(
+            onPressed: () => _navigateToCreateActivity(context),
+            icon: const Icon(Icons.add),
+            label: const Text('Add Activity'),
+          ),
+          const SizedBox(width: 8),
+          _TripMenuButton(trip: trip),
+        ],
+      ),
+      body: ResponsiveContainer(
+        child: Column(
+          children: [
+            _TripInfoHeader(trip: trip),
+            Expanded(
+              child: activitiesAsync.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (error, stackTrace) => _ErrorView(error: error),
+                data: (activities) => _DesktopTripDaysView(
+                  trip: trip,
+                  activities: activities,
+                  tripId: tripId,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _navigateToCreateActivity(BuildContext context) {
+    context.goNamed(
+      'activity-create',
+      pathParameters: {'tripId': tripId},
+    );
+  }
+}
+
+class _TripInfoHeader extends StatelessWidget {
+  const _TripInfoHeader({required this.trip});
+
+  final Trip trip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(Responsive.getSpacing(context)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                Icons.calendar_today,
+                color: Theme.of(context).colorScheme.primary,
+                size: Responsive.getIconSize(context, baseSize: 20),
+              ),
+              SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
+              Text(
+                '${trip.durationDays} ${trip.durationDays == 1 ? 'day' : 'days'}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const Spacer(),
+              if (trip.collaboratorIds.isNotEmpty) ...[
+                Icon(
+                  Icons.group,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: Responsive.getIconSize(context, baseSize: 20),
+                ),
+                SizedBox(width: Responsive.getSpacing(context, baseSpacing: 4.0)),
+                Text(
+                  '${trip.collaboratorIds.length + 1}',
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
+            ],
+          ),
+          SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
+          Text(
+            'Created ${_formatDate(trip.createdAt)}',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.outline,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
+  }
+}
+
+class _TripMenuButton extends ConsumerWidget {
+  const _TripMenuButton({required this.trip});
+
+  final Trip trip;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return PopupMenuButton<String>(
+      onSelected: (value) => _handleMenuAction(context, ref, value, trip),
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(Icons.edit),
+              SizedBox(width: 8),
+              Text('Edit Trip'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(Icons.delete, color: Colors.red),
+              SizedBox(width: 8),
+              Text('Delete Trip', style: TextStyle(color: Colors.red)),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -216,67 +335,70 @@ class TripDetailScreen extends ConsumerWidget {
       barrierDismissible: false,
       builder: (context) => StatefulBuilder(
         builder: (context, setState) => AlertDialog(
-          title: const Row(
+          title: Row(
             children: [
-              Icon(Icons.edit),
-              SizedBox(width: 8),
-              Text('Edit Trip'),
+              const Icon(Icons.edit),
+              SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
+              const Text('Edit Trip'),
             ],
           ),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Trip Name',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.label),
+          content: SizedBox(
+            width: Responsive.getDialogWidth(context),
+            child: Form(
+              key: formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextFormField(
+                    controller: nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Trip Name',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.label),
+                    ),
+                    enabled: !isLoading,
+                    textInputAction: TextInputAction.next,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter a trip name';
+                      }
+                      if (value.trim().length < 2) {
+                        return 'Trip name must be at least 2 characters';
+                      }
+                      return null;
+                    },
                   ),
-                  enabled: !isLoading,
-                  textInputAction: TextInputAction.next,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a trip name';
-                    }
-                    if (value.trim().length < 2) {
-                      return 'Trip name must be at least 2 characters';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: durationController,
-                  decoration: const InputDecoration(
-                    labelText: 'Duration (days)',
-                    border: OutlineInputBorder(),
-                    suffixText: 'days',
-                    prefixIcon: Icon(Icons.calendar_today),
+                  SizedBox(height: Responsive.getSpacing(context)),
+                  TextFormField(
+                    controller: durationController,
+                    decoration: const InputDecoration(
+                      labelText: 'Duration (days)',
+                      border: OutlineInputBorder(),
+                      suffixText: 'days',
+                      prefixIcon: Icon(Icons.calendar_today),
+                    ),
+                    keyboardType: TextInputType.number,
+                    enabled: !isLoading,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Please enter trip duration';
+                      }
+                      final duration = int.tryParse(value);
+                      if (duration == null || duration <= 0) {
+                        return 'Please enter a valid number of days';
+                      }
+                      if (duration > 365) {
+                        return 'Trip duration cannot exceed 365 days';
+                      }
+                      return null;
+                    },
                   ),
-                  keyboardType: TextInputType.number,
-                  enabled: !isLoading,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter trip duration';
-                    }
-                    final duration = int.tryParse(value);
-                    if (duration == null || duration <= 0) {
-                      return 'Please enter a valid number of days';
-                    }
-                    if (duration > 365) {
-                      return 'Trip duration cannot exceed 365 days';
-                    }
-                    return null;
-                  },
-                ),
-                if (isLoading) ...[
-                  const SizedBox(height: 16),
-                  const LinearProgressIndicator(),
+                  if (isLoading) ...[
+                    SizedBox(height: Responsive.getSpacing(context)),
+                    const LinearProgressIndicator(),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
           actions: [
@@ -310,13 +432,13 @@ class TripDetailScreen extends ConsumerWidget {
                                 Icons.check_circle,
                                 color: Theme.of(context).colorScheme.onPrimary,
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
                               const Text('Trip updated successfully!'),
                             ],
                           ),
                           backgroundColor: Theme.of(context).colorScheme.primary,
                           behavior: SnackBarBehavior.floating,
-                          margin: const EdgeInsets.all(8),
+                          margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -340,7 +462,7 @@ class TripDetailScreen extends ConsumerWidget {
                                 Icons.error_outline,
                                 color: Theme.of(context).colorScheme.onError,
                               ),
-                              const SizedBox(width: 8),
+                              SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
                               Expanded(
                                 child: Text('Failed to update trip: ${error.toString()}'),
                               ),
@@ -348,7 +470,7 @@ class TripDetailScreen extends ConsumerWidget {
                           ),
                           backgroundColor: Theme.of(context).colorScheme.error,
                           behavior: SnackBarBehavior.floating,
-                          margin: const EdgeInsets.all(8),
+                          margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -368,7 +490,7 @@ class TripDetailScreen extends ConsumerWidget {
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
                       : const Icon(Icons.save),
-                  const SizedBox(width: 8),
+                  SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
                   const Text('Save'),
                 ],
               ),
@@ -393,7 +515,7 @@ class TripDetailScreen extends ConsumerWidget {
                 Icons.delete,
                 color: Theme.of(context).colorScheme.error,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
               const Text('Delete Trip'),
             ],
           ),
@@ -402,7 +524,7 @@ class TripDetailScreen extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text('Are you sure you want to delete "${trip.name}"?'),
-              const SizedBox(height: 8),
+              SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
               Text(
                 'This action cannot be undone.',
                 style: TextStyle(
@@ -411,7 +533,7 @@ class TripDetailScreen extends ConsumerWidget {
                 ),
               ),
               if (isLoading) ...[
-                const SizedBox(height: 16),
+                SizedBox(height: Responsive.getSpacing(context)),
                 const LinearProgressIndicator(),
               ],
             ],
@@ -445,13 +567,13 @@ class TripDetailScreen extends ConsumerWidget {
                               Icons.check_circle,
                               color: Theme.of(context).colorScheme.onPrimary,
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
                             const Text('Trip deleted successfully'),
                           ],
                         ),
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.all(8),
+                        margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -473,7 +595,7 @@ class TripDetailScreen extends ConsumerWidget {
                               Icons.error_outline,
                               color: Theme.of(context).colorScheme.onError,
                             ),
-                            const SizedBox(width: 8),
+                            SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
                             Expanded(
                               child: Text('Failed to delete trip: ${error.toString()}'),
                             ),
@@ -481,7 +603,7 @@ class TripDetailScreen extends ConsumerWidget {
                         ),
                         backgroundColor: Theme.of(context).colorScheme.error,
                         behavior: SnackBarBehavior.floating,
-                        margin: const EdgeInsets.all(8),
+                        margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
@@ -503,7 +625,7 @@ class TripDetailScreen extends ConsumerWidget {
                           ),
                         )
                       : const Icon(Icons.delete_forever),
-                  const SizedBox(width: 8),
+                  SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
                   const Text('Delete'),
                 ],
               ),
@@ -513,80 +635,90 @@ class TripDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}
 
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
+class _ErrorView extends StatelessWidget {
+  const _ErrorView({required this.error});
+
+  final Object error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: Responsive.getIconSize(context, baseSize: 32),
+            color: Theme.of(context).colorScheme.error,
+          ),
+          SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
+          Text(
+            'Failed to load activities',
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
   }
 }
 
-class _TripDaysView extends ConsumerWidget {
-  const _TripDaysView({
+// Mobile layout - single column with drag and drop
+class _MobileTripDaysView extends ConsumerWidget {
+  const _MobileTripDaysView({
     required this.trip,
     required this.activities,
-    required this.onActivityTap,
+    required this.tripId,
   });
 
   final Trip trip;
   final List<Activity> activities;
-  final Function(Activity) onActivityTap;
+  final String tripId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Group activities by day
-    final Map<String, List<Activity>> activitiesByDay = {};
-    final List<Activity> unassignedActivities = [];
-
-    for (final activity in activities) {
-      if (activity.assignedDay != null) {
-        activitiesByDay.putIfAbsent(activity.assignedDay!, () => []).add(activity);
-      } else {
-        unassignedActivities.add(activity);
-      }
-    }
-
-    // Sort activities within each day by dayOrder
-    for (final dayActivities in activitiesByDay.values) {
-      dayActivities.sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
-    }
+    final groupedActivities = _groupActivitiesByDay(activities);
+    final unassignedActivities = activities.where((a) => a.assignedDay == null).toList();
 
     return ListView(
-      padding: const EdgeInsets.all(16.0),
+      padding: EdgeInsets.all(Responsive.getSpacing(context)),
       children: [
-        // Activity Pool (unassigned activities)
-        _DragDropDaySection(
+        // Activity Pool
+        _ResponsiveDaySection(
           title: 'Activity Pool',
           subtitle: unassignedActivities.isEmpty 
               ? 'No unassigned activities'
               : '${unassignedActivities.length} ${unassignedActivities.length == 1 ? 'activity' : 'activities'}',
           icon: Icons.inventory_2_outlined,
           activities: unassignedActivities,
-          onActivityTap: onActivityTap,
           isEmpty: unassignedActivities.isEmpty,
-          dayKey: null, // null indicates activity pool
-          tripId: trip.id,
+          dayKey: null,
+          tripId: tripId,
           isActivityPool: true,
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: Responsive.getSpacing(context)),
         
         // Day sections
         ...List.generate(trip.durationDays, (index) {
           final dayNumber = index + 1;
           final dayKey = 'day-$dayNumber';
-          final dayActivities = activitiesByDay[dayKey] ?? [];
+          final dayActivities = groupedActivities[dayKey] ?? [];
           
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16.0),
-            child: _DragDropDaySection(
+            padding: EdgeInsets.only(
+              bottom: Responsive.getSpacing(context),
+            ),
+            child: _ResponsiveDaySection(
               title: 'Day $dayNumber',
               subtitle: dayActivities.isEmpty 
                   ? 'No activities planned'
                   : '${dayActivities.length} ${dayActivities.length == 1 ? 'activity' : 'activities'}',
               icon: Icons.today,
               activities: dayActivities,
-              onActivityTap: onActivityTap,
               isEmpty: dayActivities.isEmpty,
               dayKey: dayKey,
-              tripId: trip.id,
+              tripId: tripId,
               isActivityPool: false,
             ),
           );
@@ -594,15 +726,212 @@ class _TripDaysView extends ConsumerWidget {
       ],
     );
   }
+
+  Map<String, List<Activity>> _groupActivitiesByDay(List<Activity> activities) {
+    final Map<String, List<Activity>> grouped = {};
+    for (final activity in activities) {
+      if (activity.assignedDay != null) {
+        grouped.putIfAbsent(activity.assignedDay!, () => []).add(activity);
+      }
+    }
+    
+    // Sort activities within each day
+    for (final dayActivities in grouped.values) {
+      dayActivities.sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
+    }
+    
+    return grouped;
+  }
 }
 
-class _DragDropDaySection extends ConsumerWidget {
-  const _DragDropDaySection({
+// Tablet layout - two columns
+class _TabletTripDaysView extends ConsumerWidget {
+  const _TabletTripDaysView({
+    required this.trip,
+    required this.activities,
+    required this.tripId,
+  });
+
+  final Trip trip;
+  final List<Activity> activities;
+  final String tripId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupedActivities = _groupActivitiesByDay(activities);
+    final unassignedActivities = activities.where((a) => a.assignedDay == null).toList();
+
+    return Row(
+      children: [
+        // Left column - Activity Pool
+        Expanded(
+          flex: 1,
+          child: Padding(
+            padding: EdgeInsets.all(Responsive.getSpacing(context)),
+            child: _ResponsiveDaySection(
+              title: 'Activity Pool',
+              subtitle: unassignedActivities.isEmpty 
+                  ? 'No unassigned activities'
+                  : '${unassignedActivities.length} ${unassignedActivities.length == 1 ? 'activity' : 'activities'}',
+              icon: Icons.inventory_2_outlined,
+              activities: unassignedActivities,
+              isEmpty: unassignedActivities.isEmpty,
+              dayKey: null,
+              tripId: tripId,
+              isActivityPool: true,
+            ),
+          ),
+        ),
+        
+        // Right column - Days
+        Expanded(
+          flex: 2,
+          child: ListView(
+            padding: EdgeInsets.all(Responsive.getSpacing(context)),
+            children: List.generate(trip.durationDays, (index) {
+              final dayNumber = index + 1;
+              final dayKey = 'day-$dayNumber';
+              final dayActivities = groupedActivities[dayKey] ?? [];
+              
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: Responsive.getSpacing(context),
+                ),
+                child: _ResponsiveDaySection(
+                  title: 'Day $dayNumber',
+                  subtitle: dayActivities.isEmpty 
+                      ? 'No activities planned'
+                      : '${dayActivities.length} ${dayActivities.length == 1 ? 'activity' : 'activities'}',
+                  icon: Icons.today,
+                  activities: dayActivities,
+                  isEmpty: dayActivities.isEmpty,
+                  dayKey: dayKey,
+                  tripId: tripId,
+                  isActivityPool: false,
+                ),
+              );
+            }),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Map<String, List<Activity>> _groupActivitiesByDay(List<Activity> activities) {
+    final Map<String, List<Activity>> grouped = {};
+    for (final activity in activities) {
+      if (activity.assignedDay != null) {
+        grouped.putIfAbsent(activity.assignedDay!, () => []).add(activity);
+      }
+    }
+    
+    // Sort activities within each day
+    for (final dayActivities in grouped.values) {
+      dayActivities.sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
+    }
+    
+    return grouped;
+  }
+}
+
+// Desktop layout - three columns with enhanced features
+class _DesktopTripDaysView extends ConsumerWidget {
+  const _DesktopTripDaysView({
+    required this.trip,
+    required this.activities,
+    required this.tripId,
+  });
+
+  final Trip trip;
+  final List<Activity> activities;
+  final String tripId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupedActivities = _groupActivitiesByDay(activities);
+    final unassignedActivities = activities.where((a) => a.assignedDay == null).toList();
+
+    return Row(
+      children: [
+        // Left sidebar - Activity Pool
+        SizedBox(
+          width: Responsive.getSidebarWidth(context),
+          child: Padding(
+            padding: EdgeInsets.all(Responsive.getSpacing(context)),
+            child: _ResponsiveDaySection(
+              title: 'Activity Pool',
+              subtitle: unassignedActivities.isEmpty 
+                  ? 'No unassigned activities'
+                  : '${unassignedActivities.length} ${unassignedActivities.length == 1 ? 'activity' : 'activities'}',
+              icon: Icons.inventory_2_outlined,
+              activities: unassignedActivities,
+              isEmpty: unassignedActivities.isEmpty,
+              dayKey: null,
+              tripId: tripId,
+              isActivityPool: true,
+            ),
+          ),
+        ),
+        
+        // Main content - Days in grid
+        Expanded(
+          child: GridView.builder(
+            padding: EdgeInsets.all(Responsive.getSpacing(context)),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: Responsive.getSpacing(context),
+              mainAxisSpacing: Responsive.getSpacing(context),
+              childAspectRatio: 0.8,
+            ),
+            itemCount: trip.durationDays,
+            itemBuilder: (context, index) {
+              final dayNumber = index + 1;
+              final dayKey = 'day-$dayNumber';
+              final dayActivities = groupedActivities[dayKey] ?? [];
+              
+              return _ResponsiveDaySection(
+                title: 'Day $dayNumber',
+                subtitle: dayActivities.isEmpty 
+                    ? 'No activities planned'
+                    : '${dayActivities.length} ${dayActivities.length == 1 ? 'activity' : 'activities'}',
+                icon: Icons.today,
+                activities: dayActivities,
+                isEmpty: dayActivities.isEmpty,
+                dayKey: dayKey,
+                tripId: tripId,
+                isActivityPool: false,
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Map<String, List<Activity>> _groupActivitiesByDay(List<Activity> activities) {
+    final Map<String, List<Activity>> grouped = {};
+    for (final activity in activities) {
+      if (activity.assignedDay != null) {
+        grouped.putIfAbsent(activity.assignedDay!, () => []).add(activity);
+      }
+    }
+    
+    // Sort activities within each day
+    for (final dayActivities in grouped.values) {
+      dayActivities.sort((a, b) => (a.dayOrder ?? 0).compareTo(b.dayOrder ?? 0));
+    }
+    
+    return grouped;
+  }
+}
+
+// Responsive day section with enhanced touch support
+class _ResponsiveDaySection extends ConsumerWidget {
+  const _ResponsiveDaySection({
     required this.title,
     required this.subtitle,
     required this.icon,
     required this.activities,
-    required this.onActivityTap,
     required this.isEmpty,
     required this.dayKey,
     required this.tripId,
@@ -613,9 +942,8 @@ class _DragDropDaySection extends ConsumerWidget {
   final String subtitle;
   final IconData icon;
   final List<Activity> activities;
-  final Function(Activity) onActivityTap;
   final bool isEmpty;
-  final String? dayKey; // null for activity pool
+  final String? dayKey;
   final String tripId;
   final bool isActivityPool;
 
@@ -623,7 +951,7 @@ class _DragDropDaySection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(Responsive.getSpacing(context)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -632,8 +960,9 @@ class _DragDropDaySection extends ConsumerWidget {
                 Icon(
                   icon,
                   color: Theme.of(context).colorScheme.primary,
+                  size: Responsive.getIconSize(context, baseSize: 20),
                 ),
-                const SizedBox(width: 8),
+                SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -649,7 +978,7 @@ class _DragDropDaySection extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: Responsive.getSpacing(context, baseSpacing: 12.0)),
             _buildDragTarget(context, ref),
           ],
         ),
@@ -658,34 +987,15 @@ class _DragDropDaySection extends ConsumerWidget {
   }
 
   Widget _buildDragTarget(BuildContext context, WidgetRef ref) {
-    return DragTarget<Activity>(
-      onAcceptWithDetails: (details) => _handleActivityDrop(context, ref, details.data),
-      builder: (context, candidateData, rejectedData) {
-        final isHighlighted = candidateData.isNotEmpty;
-        
-        return AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: isHighlighted
-                ? Border.all(
-                    color: Theme.of(context).colorScheme.primary,
-                    width: 2,
-                  )
-                : null,
-            color: isHighlighted
-                ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.1)
-                : null,
-          ),
-          child: _buildActivityList(context, ref, isHighlighted),
-        );
-      },
+    return EnhancedDragTarget(
+      onAccept: (activity) => _handleActivityDrop(context, ref, activity),
+      child: _buildActivityList(context, ref),
     );
   }
 
-  Widget _buildActivityList(BuildContext context, WidgetRef ref, bool isHighlighted) {
-    if (isEmpty && !isHighlighted) {
-      return Container(
+  Widget _buildActivityList(BuildContext context, WidgetRef ref) {
+    if (isEmpty) {
+      return SizedBox(
         height: 80,
         child: Center(
           child: Column(
@@ -693,10 +1003,10 @@ class _DragDropDaySection extends ConsumerWidget {
             children: [
               Icon(
                 isActivityPool ? Icons.inventory_2_outlined : Icons.add_circle_outline,
-                size: 24,
+                size: Responsive.getIconSize(context, baseSize: 24),
                 color: Theme.of(context).colorScheme.outline,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: Responsive.getSpacing(context, baseSpacing: 4.0)),
               Text(
                 isActivityPool 
                     ? 'Drag activities here to unassign'
@@ -704,6 +1014,7 @@ class _DragDropDaySection extends ConsumerWidget {
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Theme.of(context).colorScheme.outline,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
@@ -712,18 +1023,19 @@ class _DragDropDaySection extends ConsumerWidget {
     }
 
     if (isActivityPool) {
-      // Activity pool - simple list without reordering
       return Column(
         children: activities.map((activity) => Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
-          child: _DraggableActivityCard(
+          padding: EdgeInsets.only(
+            bottom: Responsive.getSpacing(context, baseSpacing: 8.0),
+          ),
+          child: EnhancedDraggableActivityCard(
             activity: activity,
-            onTap: () => onActivityTap(activity),
+            onTap: () => _navigateToActivity(context, activity),
+            showDragHandle: true,
           ),
         )).toList(),
       );
     } else {
-      // Day section - reorderable list
       return ReorderableListView.builder(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -733,10 +1045,13 @@ class _DragDropDaySection extends ConsumerWidget {
           final activity = activities[index];
           return Padding(
             key: ValueKey(activity.id),
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: _DraggableActivityCard(
+            padding: EdgeInsets.only(
+              bottom: Responsive.getSpacing(context, baseSpacing: 8.0),
+            ),
+            child: EnhancedDraggableActivityCard(
               activity: activity,
-              onTap: () => onActivityTap(activity),
+              onTap: () => _navigateToActivity(context, activity),
+              showDragHandle: true,
             ),
           );
         },
@@ -744,10 +1059,19 @@ class _DragDropDaySection extends ConsumerWidget {
     }
   }
 
+  void _navigateToActivity(BuildContext context, Activity activity) {
+    context.goNamed(
+      'activity-detail',
+      pathParameters: {
+        'tripId': tripId,
+        'activityId': activity.id,
+      },
+    );
+  }
+
   void _handleActivityDrop(BuildContext context, WidgetRef ref, Activity activity) async {
     try {
       if (isActivityPool) {
-        // Move to activity pool
         await ref.read(activityListNotifierProvider(tripId).notifier)
             .moveActivityToPool(activity.id);
         
@@ -756,13 +1080,12 @@ class _DragDropDaySection extends ConsumerWidget {
             SnackBar(
               content: Text('${activity.place} moved to activity pool'),
               behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(8),
+              margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
             ),
           );
         }
       } else {
-        // Move to specific day
-        final newOrder = activities.length; // Add to end
+        final newOrder = activities.length;
         await ref.read(activityListNotifierProvider(tripId).notifier)
             .moveActivityBetweenDays(activity.id, activity.assignedDay, dayKey!, newOrder);
         
@@ -771,7 +1094,7 @@ class _DragDropDaySection extends ConsumerWidget {
             SnackBar(
               content: Text('${activity.place} moved to $title'),
               behavior: SnackBarBehavior.floating,
-              margin: const EdgeInsets.all(8),
+              margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
             ),
           );
         }
@@ -783,7 +1106,7 @@ class _DragDropDaySection extends ConsumerWidget {
             content: Text('Failed to move activity: ${error.toString()}'),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
-            margin: const EdgeInsets.all(8),
+            margin: EdgeInsets.all(Responsive.getSpacing(context, baseSpacing: 8.0)),
           ),
         );
       }
@@ -795,7 +1118,6 @@ class _DragDropDaySection extends ConsumerWidget {
       newIndex -= 1;
     }
 
-    // Create a new list with reordered activities
     final reorderedActivities = List<Activity>.from(activities);
     final activity = reorderedActivities.removeAt(oldIndex);
     reorderedActivities.insert(newIndex, activity);
@@ -809,129 +1131,3 @@ class _DragDropDaySection extends ConsumerWidget {
   }
 }
 
-class _DraggableActivityCard extends StatelessWidget {
-  const _DraggableActivityCard({
-    required this.activity,
-    required this.onTap,
-  });
-
-  final Activity activity;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Draggable<Activity>(
-      data: activity,
-      feedback: Material(
-        elevation: 8,
-        borderRadius: BorderRadius.circular(8),
-        child: SizedBox(
-          width: 300,
-          child: _ActivityCardContent(
-            activity: activity,
-            onTap: onTap,
-            isDragging: true,
-          ),
-        ),
-      ),
-      childWhenDragging: Opacity(
-        opacity: 0.5,
-        child: _ActivityCardContent(
-          activity: activity,
-          onTap: onTap,
-          isDragging: false,
-        ),
-      ),
-      child: _ActivityCardContent(
-        activity: activity,
-        onTap: onTap,
-        isDragging: false,
-      ),
-    );
-  }
-}
-
-class _ActivityCardContent extends StatelessWidget {
-  const _ActivityCardContent({
-    required this.activity,
-    required this.onTap,
-    required this.isDragging,
-  });
-
-  final Activity activity;
-  final VoidCallback onTap;
-  final bool isDragging;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: isDragging ? 8 : 1,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8.0),
-        child: Padding(
-          padding: const EdgeInsets.all(12.0),
-          child: Row(
-            children: [
-              Icon(
-                Icons.drag_handle,
-                color: Theme.of(context).colorScheme.outline,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      activity.place,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          activity.activityType,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.outline,
-                          ),
-                        ),
-                        if (activity.price != null && activity.price!.isNotEmpty) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            '• ${activity.price}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Theme.of(context).colorScheme.outline,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (activity.brainstormIdeas.isNotEmpty) ...[
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    '${activity.brainstormIdeas.length}',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              const Icon(Icons.arrow_forward_ios, size: 16),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

@@ -144,9 +144,8 @@
   - Add real-time synchronization for time slot assignments
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 5.4, 6.3, 7.4_
 
-- [ ] 20. Enable Firestore offline persistence and real-time sync
+- [x] 20. Enable Firestore offline persistence and real-time sync
   - Enable Firestore offline persistence for web, iOS, and Android platforms
-  - Configure automatic sync when connection is restored
   - Test brief network interruption scenarios with offline mode
   - Verify real-time collaboration works seamlessly with offline persistence
   - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_

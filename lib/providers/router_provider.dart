@@ -9,6 +9,7 @@ import '../screens/trips/trip_detail_screen.dart';
 import '../screens/trips/trip_create_screen.dart';
 import '../screens/activities/activity_detail_screen.dart';
 import '../screens/activities/activity_create_screen.dart';
+import '../screens/debug/offline_test_screen.dart';
 import 'auth_provider.dart';
 
 part 'router_provider.g.dart';
@@ -134,6 +135,11 @@ GoRouter router(Ref ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: '/debug/offline-test',
+        name: 'offline-test',
+        builder: (context, state) => const OfflineTestScreen(),
       ),
     ],
   );

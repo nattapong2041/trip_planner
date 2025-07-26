@@ -4,12 +4,13 @@ import 'package:logger/logger.dart';
 import '../models/trip.dart';
 import '../models/user.dart';
 import '../services/user_service.dart';
+import '../config/firestore_config.dart';
 
 import 'trip_repository.dart';
 
-/// Firebase implementation of TripRepository using Firestore
+/// Firebase implementation of TripRepository using Firestore with offline persistence
 class FirebaseTripRepository implements TripRepository {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static FirebaseFirestore get _firestore => FirestoreConfig.instance;
   static final Logger _logger = Logger();
   
   // Collection references

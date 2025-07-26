@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -18,6 +19,27 @@ class TripListScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('My Trips'),
         actions: [
+          if (kDebugMode)
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.bug_report),
+              onSelected: (value) {
+                if (value == 'offline-test') {
+                  context.goNamed('offline-test');
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'offline-test',
+                  child: Row(
+                    children: [
+                      Icon(Icons.wifi_off),
+                      SizedBox(width: 8),
+                      Text('Offline Test'),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {

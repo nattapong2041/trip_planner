@@ -3,11 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
 import '../models/activity.dart';
 import '../models/brainstorm_idea.dart';
+import '../config/firestore_config.dart';
 import 'activity_repository.dart';
 
-/// Firebase implementation of ActivityRepository using Firestore
+/// Firebase implementation of ActivityRepository using Firestore with offline persistence
 class FirebaseActivityRepository implements ActivityRepository {
-  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static FirebaseFirestore get _firestore => FirestoreConfig.instance;
   static final Logger _logger = Logger();
 
   // Collection references

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:logger/logger.dart';
 import 'package:trip_planner/firebase_options.dart';
+import 'package:trip_planner/config/firestore_config.dart';
 import 'screens/app.dart';
 
 // Global logger instance
@@ -26,7 +27,9 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     logger.i('Firebase initialized successfully');
-    ('Some Firebase services may not be working properly');
+    
+    // Enable Firestore offline persistence
+    await FirestoreConfig.enableOfflinePersistence();
     
   } catch (e) {
     logger.e('Failed to initialize Firebase: $e');

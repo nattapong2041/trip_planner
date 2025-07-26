@@ -656,6 +656,29 @@ class TimeSlotActivityCard extends StatelessWidget {
 }
 ```
 
+## Offline Persistence Implementation
+
+### Firestore Offline Configuration
+
+```dart
+// lib/config/firestore_config.dart
+class FirestoreConfig {
+  static Future<void> enableOfflinePersistence() async {
+    final db = FirebaseFirestore.instance;
+
+    if (kIsWeb) {
+      // Web platform - enable persistence with tab synchronization
+      await db.enablePersistence(
+        const PersistenceSettings(synchronizeTabs: true),
+      );
+    } else {
+      // Mobile platforms (iOS, Android) and Desktop
+      db.settings = const Settings(persistenceEnabled: true);
+    }
+  }
+}
+```
+
 ## Performance Considerations
 
 ### Optimization Strategies
@@ -663,7 +686,8 @@ class TimeSlotActivityCard extends StatelessWidget {
 1. **Firestore Optimization**
    - Use compound indexes for complex queries
    - Implement pagination for large trip lists
-   - Cache frequently accessed data locally
+   - Cache frequently accessed data locally with offline persistence
+   - Leverage Firestore's automatic offline sync capabilities
 
 2. **State Management**
    - Use `select` to prevent unnecessary rebuilds
@@ -675,9 +699,9 @@ class TimeSlotActivityCard extends StatelessWidget {
    - Use `ListView.builder` for dynamic lists
    - Optimize image loading with `cached_network_image`
 
-4. **Real-time Updates**
+4. **Real-time Updates & Offline Support**
    - Use Firestore listeners for real-time collaboration
-   - Enable Firestore offline persistence for brief network interruptions
+   - Enable Firestore offline persistence for seamless offline experience
    - Leverage automatic sync when connection is restored
 
 ### Memory Management

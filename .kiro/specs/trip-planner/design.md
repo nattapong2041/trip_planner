@@ -474,7 +474,7 @@ class AppError with _$AppError {
 - **Repository Level**: Catch and transform exceptions into AppError types
 - **Provider Level**: Use AsyncValue.error to propagate errors
 - **UI Level**: Display user-friendly error messages with retry options
-- **Offline Support**: Queue operations when offline, sync when online
+- **Real-time Sync**: Use Firestore's built-in offline persistence for seamless collaboration
 
 ### Global Error Handler
 
@@ -676,9 +676,9 @@ class TimeSlotActivityCard extends StatelessWidget {
    - Optimize image loading with `cached_network_image`
 
 4. **Real-time Updates**
-   - Use Firestore listeners efficiently
-   - Implement debouncing for rapid updates
-   - Handle connection state changes gracefully
+   - Use Firestore listeners for real-time collaboration
+   - Enable Firestore offline persistence for brief network interruptions
+   - Leverage automatic sync when connection is restored
 
 ### Memory Management
 
@@ -692,14 +692,14 @@ class TimeSlotActivityCard extends StatelessWidget {
 ### Web Platform
 - Responsive design with breakpoints
 - Web-specific authentication flows
-- Browser storage for offline capabilities
+- Firestore offline persistence for web
 - PWA features for app-like experience
 
 ### Mobile Platforms
 - Native authentication (Google/Apple)
 - Touch gestures for drag-and-drop
 - Platform-specific UI components
-- Background sync capabilities
+- Firestore offline persistence for mobile
 
 ### Tablet Platform
 - Optimized layouts for larger screens

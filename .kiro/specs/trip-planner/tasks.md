@@ -144,18 +144,18 @@
   - Add real-time synchronization for time slot assignments
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 5.4, 6.3, 7.4_
 
-- [ ] 20. Add offline support and data synchronization
-  - Implement local caching for offline access
-  - Create sync queue for offline changes
-  - Handle connection state changes gracefully
-  - Add conflict resolution for concurrent updates
-  - _Requirements: 8.1, 8.2, 8.3, 8.4_
+- [ ] 20. Enable Firestore offline persistence and real-time sync
+  - Enable Firestore offline persistence for web, iOS, and Android platforms
+  - Configure automatic sync when connection is restored
+  - Test brief network interruption scenarios with offline mode
+  - Verify real-time collaboration works seamlessly with offline persistence
+  - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
 
 - [ ] 21. Create comprehensive Firebase integration tests
   - Write integration tests for authentication flow
   - Test real-time collaboration features including drag-and-drop synchronization
   - Test time slot assignment and brainstorm idea reordering across users
-  - Validate offline/online sync functionality for all operations
+  - Validate Firestore offline persistence and automatic sync functionality
   - Test security rules and data access controls
   - Test drag-and-drop operations with concurrent users
   - _Requirements: All Firebase-related requirements validation_

@@ -6,7 +6,7 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 
 ## Requirements
 
-### Requirement 1
+### Requirement 1: User Authentication
 
 **User Story:** As a user, I want to authenticate with Google or Apple, so that I can securely access the app and collaborate with friends.
 
@@ -18,7 +18,7 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 4. WHEN authentication is successful THEN the system SHALL redirect the user to the main dashboard
 5. WHEN authentication fails THEN the system SHALL display an appropriate error message
 
-### Requirement 2
+### Requirement 2: Trip Management
 
 **User Story:** As a user, I want to create and manage trip plans, so that I can organize my travel ideas with friends.
 
@@ -30,7 +30,7 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 4. WHEN a user views a trip THEN the system SHALL display the trip in chronological order by days
 5. IF a trip has no activities THEN the system SHALL display empty day placeholders
 
-### Requirement 3
+### Requirement 3: Collaboration and Invitations
 
 **User Story:** As a user, I want to invite friends to collaborate on trip planning, so that we can plan together.
 
@@ -42,7 +42,7 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 4. WHEN multiple users collaborate THEN the system SHALL show real-time updates of changes
 5. WHEN a user views a trip THEN the system SHALL display all current collaborators
 
-### Requirement 4
+### Requirement 4: Activity Pool Management
 
 **User Story:** As a user, I want to create activity cards in the activity pool, so that I can capture potential activities for the trip.
 
@@ -54,7 +54,7 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 4. WHEN viewing the activity pool THEN the system SHALL display all unassigned activities
 5. WHEN multiple users add activities THEN the system SHALL show all activities from all collaborators in the shared pool
 
-### Requirement 5
+### Requirement 5: Activity Brainstorming
 
 **User Story:** As a user, I want to brainstorm ideas within activities with my friends, so that we can collaboratively plan what to do at each location.
 
@@ -67,7 +67,7 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 5. WHEN multiple users brainstorm simultaneously THEN the system SHALL update the list in real-time
 6. WHEN a brainstorm idea is added THEN the system SHALL allow editing and reordering by any collaborator
 
-### Requirement 6
+### Requirement 6: Daily Itinerary Planning
 
 **User Story:** As a user, I want to organize activities into daily itineraries with time slots, so that I can create structured trip plans with timing.
 
@@ -80,7 +80,7 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 5. WHEN a user removes an activity from a day THEN the system SHALL return it to the activity pool
 6. WHEN viewing a day plan THEN the system SHALL display activities in chronological order by time slot
 
-### Requirement 7
+### Requirement 7: Drag and Drop Interface
 
 **User Story:** As a user, I want to drag and drop activities between the pool and days, so that I can easily organize my trip itinerary.
 
@@ -93,7 +93,7 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 5. WHEN a user reorders activities within a day by dragging THEN the system SHALL update the sequence and time slots
 6. WHEN drag and drop operations occur THEN the system SHALL provide visual feedback during the drag operation
 
-### Requirement 8
+### Requirement 8: Cross-Platform Support
 
 **User Story:** As a user, I want to access the app on web, mobile, and tablet, so that I can plan trips from any device.
 
@@ -105,19 +105,19 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 4. WHEN switching between devices THEN the system SHALL maintain data synchronization
 5. WHEN using touch devices THEN the system SHALL support touch gestures for drag-and-drop functionality
 
-### Requirement 9
+### Requirement 9: Data Synchronization
 
-**User Story:** As a user, I want my trip data to be automatically saved and synchronized, so that I don't lose my planning work.
+**User Story:** As a user, I want my trip data to be automatically saved and synchronized, so that I don't lose my planning work and can collaborate in real-time.
 
 #### Acceptance Criteria
 
-1. WHEN a user makes changes THEN the system SHALL automatically save to Firestore
-2. WHEN multiple users edit simultaneously THEN the system SHALL handle concurrent updates gracefully
-3. WHEN a user loses internet connection THEN the system SHALL queue changes for sync when reconnected
-4. WHEN data conflicts occur THEN the system SHALL use last-write-wins resolution
-5. WHEN a user reopens the app THEN the system SHALL display the most recent data state
+1. WHEN a user makes changes THEN the system SHALL automatically save to Firestore in real-time
+2. WHEN multiple users edit simultaneously THEN the system SHALL show real-time updates using Firestore listeners
+3. WHEN a user has a brief network interruption THEN the system SHALL use Firestore offline mode to maintain functionality
+4. WHEN the user reconnects THEN the system SHALL automatically sync any offline changes via Firestore
+5. WHEN a user reopens the app THEN the system SHALL display the most recent synchronized data state
 
-### Requirement 10
+### Requirement 10: User Experience
 
 **User Story:** As a user, I want a simple and intuitive interface, so that I can focus on planning rather than learning the app.
 

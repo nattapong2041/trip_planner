@@ -4,7 +4,6 @@ import '../models/brainstorm_idea.dart';
 import '../models/app_error.dart';
 import '../repositories/activity_repository.dart';
 import '../repositories/firebase_activity_repository.dart';
-import '../repositories/mock_activity_repository.dart';
 import 'auth_provider.dart';
 
 part 'activity_provider.g.dart';
@@ -12,9 +11,7 @@ part 'activity_provider.g.dart';
 /// Provider for the ActivityRepository instance
 @riverpod
 ActivityRepository activityRepository(Ref ref) {
-  // Use mock repository for development
-  // TODO: Switch to FirebaseActivityRepository() when Firebase is properly configured
-  return MockActivityRepository();
+  return FirebaseActivityRepository();
 }
 
 /// Notifier for managing activities for a specific trip

@@ -150,7 +150,15 @@
   - Verify real-time collaboration works seamlessly with offline persistence
   - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5_
 
-- [ ] 21. Create comprehensive Firebase integration tests
+- [x] 21. Fix real-time sync for collaboration
+  - **ISSUE IDENTIFIED**: Activity provider was using MockActivityRepository instead of FirebaseActivityRepository
+  - **FIXED**: Updated activity provider to use FirebaseActivityRepository for real-time sync
+  - **RESULT**: Activities now sync in real-time between collaborators
+  - Activities created by other collaborators are now visible immediately
+  - Real-time updates work for all activity operations (create, update, delete, reorder)
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5, 5.4, 6.3, 7.4_
+
+- [ ] 22. Create comprehensive Firebase integration tests
   - Write integration tests for authentication flow
   - Test real-time collaboration features including drag-and-drop synchronization
   - Test time slot assignment and brainstorm idea reordering across users
@@ -159,7 +167,7 @@
   - Test drag-and-drop operations with concurrent users
   - _Requirements: All Firebase-related requirements validation_
 
-- [ ] 22. Optimize performance and finalize MVP
+- [ ] 23. Optimize performance and finalize MVP
   - Implement lazy loading and pagination for large datasets
   - Optimize Firestore queries and indexes
   - Add image caching and memory management

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The Trip Planner with Friends application is a collaborative travel planning platform that enables users to brainstorm, organize, and plan trips together. The app allows friends to collectively suggest destinations, activities, and create structured day-by-day itineraries. Built as an MVP with Flutter and Firebase, it supports web, mobile, and tablet platforms while maintaining simplicity and scalability.
+The Trip Planner with Friends application is a collaborative travel planning platform that enables users to brainstorm, organize, and plan trips together. The app allows friends to collectively suggest destinations, activities, and create structured day-by-day itineraries with time slots. Built as an MVP with Flutter and Firebase, it supports web, mobile, tablet, and desktop platforms while maintaining simplicity and scalability through real-time synchronization and offline persistence.
 
 ## Requirements
 
@@ -128,3 +128,16 @@ The Trip Planner with Friends application is a collaborative travel planning pla
 3. WHEN viewing trip information THEN the system SHALL use clear visual hierarchy and typography
 4. WHEN errors occur THEN the system SHALL display user-friendly error messages
 5. WHEN loading data THEN the system SHALL show appropriate loading indicators
+
+### Requirement 11: Trip Detail Screen with Day Management
+
+**User Story:** As a user, I want to customize day titles and reorder trip days, so that I can organize my itinerary based on locations and preferences.
+
+#### Acceptance Criteria
+
+1. WHEN a user views the trip detail screen THEN the system SHALL display each day with an editable title field
+2. WHEN a user edits a day title THEN the system SHALL allow custom titles like "Day 1: Go to XX" or "Day 2: Go to USJ"
+3. WHEN displaying day cards THEN the system SHALL show minimal information including day number, custom title, and primary location
+4. WHEN a user wants to reorder days THEN the system SHALL allow dragging day cards to swap their positions
+5. WHEN days are reordered THEN the system SHALL update day numbers automatically and maintain all associated activities
+6. WHEN a day is moved THEN the system SHALL preserve all activities and time slots assigned to that day

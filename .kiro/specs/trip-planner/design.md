@@ -59,9 +59,23 @@ abstract class Trip with _$Trip {
     required List<String> collaboratorIds,
     required DateTime createdAt,
     required DateTime updatedAt,
+    required List<TripDay> days, // Custom day titles and ordering
   }) = _Trip;
   
   factory Trip.fromJson(Map<String, dynamic> json) => _$TripFromJson(json);
+}
+
+@freezed
+abstract class TripDay with _$TripDay {
+  const factory TripDay({
+    required String id,
+    required int dayNumber,
+    required String title, // Custom title like "Day 1: Go to XX"
+    required int order, // For reordering days
+    String? primaryLocation, // Main location for the day
+  }) = _TripDay;
+  
+  factory TripDay.fromJson(Map<String, dynamic> json) => _$TripDayFromJson(json);
 }
 
 @freezed
@@ -127,6 +141,8 @@ abstract class TripRepository {
   Future<Trip> updateTrip(Trip trip);
   Future<void> deleteTrip(String tripId);
   Future<void> addCollaborator(String tripId, String email);
+  Future<Trip> updateDayTitle(String tripId, String dayId, String newTitle);
+  Future<Trip> reorderDays(String tripId, List<String> dayIds);
 }
 
 abstract class ActivityRepository {
@@ -180,6 +196,34 @@ class TripDetailNotifier extends _$TripDetailNotifier {
   @override
   AsyncValue<Trip?> build(String tripId) {
     // Implementation for single trip management
+  }
+  
+  Future<void> updateDayTitle(String dayId, String newTitle) async {
+    final currentTrip = state.value;
+    if (currentTrip == null) return;
+    
+    try {
+      state = const AsyncValue.loading();
+      final updatedTrip = await ref.read(tripRepositoryProvider)
+          .updateDayTitle(currentTrip.id, dayId, newTitle);
+      state = AsyncValue.data(updatedTrip);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+  
+  Future<void> reorderDays(List<String> dayIds) async {
+    final currentTrip = state.value;
+    if (currentTrip == null) return;
+    
+    try {
+      state = const AsyncValue.loading();
+      final updatedTrip = await ref.read(tripRepositoryProvider)
+          .reorderDays(currentTrip.id, dayIds);
+      state = AsyncValue.data(updatedTrip);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
   }
 }
 
@@ -341,6 +385,431 @@ class ActivityPoolDropTarget extends ConsumerWidget {
 }
 ```
 
+### Day Management Components
+
+```dart
+// Editable Day Card with Custom Title
+class EditableDayCard extends ConsumerStatefulWidget {
+  final TripDay day;
+  final String tripId;
+  final List<Activity> dayActivities;
+  
+  const EditableDayCard({
+    Key? key,
+    required this.day,
+    required this.tripId,
+    required this.dayActivities,
+  }) : super(key: key);
+  
+  @override
+  ConsumerState<EditableDayCard> createState() => _EditableDayCardState();
+}
+
+class _EditableDayCardState extends ConsumerState<EditableDayCard> {
+  late TextEditingController _titleController;
+  bool _isEditing = false;
+  
+  @override
+  void initState() {
+    super.initState();
+    _titleController = TextEditingController(text: widget.day.title);
+  }
+  
+  @override
+  void dispose() {
+    _titleController.dispose();
+    super.dispose();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    final primaryLocation = widget.dayActivities.isNotEmpty 
+        ? widget.dayActivities.first.place 
+        : null;
+    
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Text(
+                  'Day ${widget.day.dayNumber}',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: Icon(_isEditing ? Icons.check : Icons.edit),
+                  onPressed: _toggleEdit,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (_isEditing)
+              TextField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  hintText: 'Enter day title...',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (_) => _saveTitle(),
+              )
+            else
+              GestureDetector(
+                onTap: () => setState(() => _isEditing = true),
+                child: Text(
+                  widget.day.title,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ),
+            if (primaryLocation != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Primary location: $primaryLocation',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+            const SizedBox(height: 8),
+            Text(
+              '${widget.dayActivities.length} activities',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  void _toggleEdit() {
+    if (_isEditing) {
+      _saveTitle();
+    } else {
+      setState(() => _isEditing = true);
+    }
+  }
+  
+  void _saveTitle() async {
+    if (_titleController.text.trim().isNotEmpty) {
+      await ref.read(tripDetailNotifierProvider(widget.tripId).notifier)
+          .updateDayTitle(widget.day.id, _titleController.text.trim());
+    }
+    setState(() => _isEditing = false);
+  }
+}
+
+// Reorderable Day List
+class ReorderableDayList extends ConsumerWidget {
+  final String tripId;
+  final List<TripDay> days;
+  final Map<String, List<Activity>> activitiesByDay;
+  
+  const ReorderableDayList({
+    Key? key,
+    required this.tripId,
+    required this.days,
+    required this.activitiesByDay,
+  }) : super(key: key);
+  
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return ReorderableListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: days.length,
+      onReorder: (oldIndex, newIndex) async {
+        if (oldIndex < newIndex) newIndex--;
+        
+        final reorderedDays = List<TripDay>.from(days);
+        final day = reorderedDays.removeAt(oldIndex);
+        reorderedDays.insert(newIndex, day);
+        
+        // Update day numbers and order
+        final updatedDayIds = reorderedDays.map((d) => d.id).toList();
+        
+        await ref.read(tripDetailNotifierProvider(tripId).notifier)
+            .reorderDays(updatedDayIds);
+      },
+      itemBuilder: (context, index) {
+        final day = days[index];
+        final dayActivities = activitiesByDay[day.id] ?? [];
+        
+        return EditableDayCard(
+          key: ValueKey(day.id),
+          day: day,
+          tripId: tripId,
+          dayActivities: dayActivities,
+        );
+      },
+    );
+  }
+}
+
+// Day Management Provider for Drag and Drop
+@riverpod
+class DayDragDropNotifier extends _$DayDragDropNotifier {
+  @override
+  DayDragDropState build() {
+    return const DayDragDropState();
+  }
+  
+  void startDragDay(TripDay day) {
+    state = state.copyWith(draggedDay: day, isDraggingDay: true);
+  }
+  
+  void endDragDay() {
+    state = state.copyWith(draggedDay: null, isDraggingDay: false);
+  }
+}
+
+@freezed
+class DayDragDropState with _$DayDragDropState {
+  const factory DayDragDropState({
+    TripDay? draggedDay,
+    @Default(false) bool isDraggingDay,
+  }) = _DayDragDropState;
+}
+```
+
+### Collaboration System Components
+
+```dart
+// Collaborator Management Widget
+class CollaboratorManagementWidget extends ConsumerStatefulWidget {
+  final String tripId;
+  final List<String> collaboratorIds;
+  final String ownerId;
+  
+  const CollaboratorManagementWidget({
+    Key? key,
+    required this.tripId,
+    required this.collaboratorIds,
+    required this.ownerId,
+  }) : super(key: key);
+  
+  @override
+  ConsumerState<CollaboratorManagementWidget> createState() => _CollaboratorManagementWidgetState();
+}
+
+class _CollaboratorManagementWidgetState extends ConsumerState<CollaboratorManagementWidget> {
+  final TextEditingController _emailController = TextEditingController();
+  
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+  
+  @override
+  Widget build(BuildContext context) {
+    final currentUser = ref.watch(authNotifierProvider).value;
+    final isOwner = currentUser?.id == widget.ownerId;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Collaborators',
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        const SizedBox(height: 8),
+        
+        // Display current collaborators
+        ...widget.collaboratorIds.map((collaboratorId) => 
+          FutureBuilder<User?>(
+            future: _getUserById(collaboratorId),
+            builder: (context, snapshot) {
+              if (snapshot.hasData) {
+                final user = snapshot.data!;
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: user.photoUrl != null 
+                        ? NetworkImage(user.photoUrl!) 
+                        : null,
+                    child: user.photoUrl == null 
+                        ? Text(user.displayName[0].toUpperCase()) 
+                        : null,
+                  ),
+                  title: Text(user.displayName),
+                  subtitle: Text(user.email),
+                  trailing: collaboratorId == widget.ownerId 
+                      ? const Icon(Icons.star, color: Colors.amber)
+                      : null,
+                );
+              }
+              return const ListTile(
+                leading: CircleAvatar(child: CircularProgressIndicator()),
+                title: Text('Loading...'),
+              );
+            },
+          ),
+        ),
+        
+        // Add collaborator section (only for owner)
+        if (isOwner) ...[
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _emailController,
+                  decoration: const InputDecoration(
+                    hintText: 'Enter email to invite',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.emailAddress,
+                ),
+              ),
+              const SizedBox(width: 8),
+              ElevatedButton(
+                onPressed: _inviteCollaborator,
+                child: const Text('Invite'),
+              ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+  
+  Future<User?> _getUserById(String userId) async {
+    // Implementation to fetch user by ID from Firestore
+    return null; // Placeholder
+  }
+  
+  void _inviteCollaborator() async {
+    final email = _emailController.text.trim();
+    if (email.isNotEmpty) {
+      try {
+        await ref.read(tripRepositoryProvider).addCollaborator(widget.tripId, email);
+        _emailController.clear();
+        // Show success message
+      } catch (error) {
+        // Show error message
+      }
+    }
+  }
+}
+
+// Activity Collaborator Info Widget
+class ActivityCollaboratorInfo extends ConsumerWidget {
+  final Activity activity;
+  
+  const ActivityCollaboratorInfo({
+    Key? key,
+    required this.activity,
+  }) : super(key: key);
+  
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Show who created the activity
+        FutureBuilder<User?>(
+          future: _getUserById(activity.createdBy),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              final creator = snapshot.data!;
+              return Row(
+                children: [
+                  CircleAvatar(
+                    radius: 12,
+                    backgroundImage: creator.photoUrl != null 
+                        ? NetworkImage(creator.photoUrl!) 
+                        : null,
+                    child: creator.photoUrl == null 
+                        ? Text(creator.displayName[0].toUpperCase(), style: const TextStyle(fontSize: 10)) 
+                        : null,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Created by ${creator.displayName}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+        
+        // Show brainstorm ideas with creators
+        if (activity.brainstormIdeas.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            'Brainstorm Ideas:',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          ...activity.brainstormIdeas.map((idea) => 
+            Padding(
+              padding: const EdgeInsets.only(left: 8.0, top: 4.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FutureBuilder<User?>(
+                    future: _getUserById(idea.createdBy),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        final creator = snapshot.data!;
+                        return CircleAvatar(
+                          radius: 8,
+                          backgroundImage: creator.photoUrl != null 
+                              ? NetworkImage(creator.photoUrl!) 
+                              : null,
+                          child: creator.photoUrl == null 
+                              ? Text(creator.displayName[0].toUpperCase(), style: const TextStyle(fontSize: 8)) 
+                              : null,
+                        );
+                      }
+                      return const CircleAvatar(radius: 8);
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          idea.description,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        FutureBuilder<User?>(
+                          future: _getUserById(idea.createdBy),
+                          builder: (context, snapshot) {
+                            if (snapshot.hasData) {
+                              final creator = snapshot.data!;
+                              return Text(
+                                'by ${creator.displayName}',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.grey[600],
+                                  fontSize: 10,
+                                ),
+                              );
+                            }
+                            return const SizedBox.shrink();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+  
+  Future<User?> _getUserById(String userId) async {
+    // Implementation to fetch user by ID from Firestore
+    return null; // Placeholder
+  }
+}
+```
+
 ### Navigation Structure
 
 ```dart
@@ -387,6 +856,150 @@ GoRouter router(Ref ref) {
 }
 ```
 
+### Authentication Screen Design
+
+```dart
+// Authentication Screen with Google and Apple Sign-In
+class AuthScreen extends ConsumerWidget {
+  const AuthScreen({Key? key}) : super(key: key);
+  
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final authState = ref.watch(authNotifierProvider);
+    
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // App Logo and Title
+              Icon(
+                Icons.travel_explore,
+                size: 80,
+                color: Theme.of(context).primaryColor,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Trip Planner',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Plan trips with friends',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              const SizedBox(height: 48),
+              
+              // Authentication Buttons
+              if (authState.isLoading)
+                const CircularProgressIndicator()
+              else ...[
+                // Google Sign-In Button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => ref.read(authNotifierProvider.notifier).signInWithGoogle(),
+                    icon: const Icon(Icons.login),
+                    label: const Text('Sign in with Google'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Apple Sign-In Button (iOS only)
+                if (Platform.isIOS)
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => ref.read(authNotifierProvider.notifier).signInWithApple(),
+                      icon: const Icon(Icons.apple),
+                      label: const Text('Sign in with Apple'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.black,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+              ],
+              
+              // Error Display
+              if (authState.hasError) ...[
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade50,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade200),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.error, color: Colors.red.shade600),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Authentication failed. Please try again.',
+                          style: TextStyle(color: Colors.red.shade700),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// Enhanced Auth Provider with Apple Sign-In
+@riverpod
+class AuthNotifier extends _$AuthNotifier {
+  @override
+  AsyncValue<User?> build() {
+    // Listen to auth state changes
+    final authRepository = ref.read(authRepositoryProvider);
+    return AsyncValue.data(authRepository.currentUser);
+  }
+  
+  Future<void> signInWithGoogle() async {
+    state = const AsyncValue.loading();
+    try {
+      final user = await ref.read(authRepositoryProvider).signInWithGoogle();
+      state = AsyncValue.data(user);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+  
+  Future<void> signInWithApple() async {
+    state = const AsyncValue.loading();
+    try {
+      final user = await ref.read(authRepositoryProvider).signInWithApple();
+      state = AsyncValue.data(user);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+  
+  Future<void> signOut() async {
+    try {
+      await ref.read(authRepositoryProvider).signOut();
+      state = const AsyncValue.data(null);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
+  }
+}
+```
+
 ## Data Models
 
 ### Firestore Collections Structure
@@ -408,6 +1021,7 @@ trips/
     - collaboratorIds: array<string>
     - createdAt: timestamp
     - updatedAt: timestamp
+    - days: array<TripDay> (with custom titles and ordering)
 
 activities/
   {activityId}/
@@ -730,3 +1344,225 @@ class FirestoreConfig {
 - Split-view for trip and activity management
 - Enhanced collaboration features
 - Multi-window support where available
+
+## Responsive Design Strategy
+
+### Design Rationale
+The responsive design approach ensures optimal user experience across all supported platforms (mobile, tablet, web, desktop) while maintaining consistent functionality. The design adapts to different screen sizes and input methods without compromising the core collaborative features.
+
+### Breakpoint Strategy
+
+```dart
+// Responsive breakpoints for different screen sizes
+class ResponsiveBreakpoints {
+  static const double mobile = 600;
+  static const double tablet = 900;
+  static const double desktop = 1200;
+  
+  static bool isMobile(BuildContext context) => 
+      MediaQuery.of(context).size.width < mobile;
+  
+  static bool isTablet(BuildContext context) => 
+      MediaQuery.of(context).size.width >= mobile && 
+      MediaQuery.of(context).size.width < desktop;
+  
+  static bool isDesktop(BuildContext context) => 
+      MediaQuery.of(context).size.width >= desktop;
+}
+```
+
+### Platform-Specific UI Adaptations
+
+#### Mobile Interface (< 600px)
+- **Navigation**: Bottom navigation bar for primary sections
+- **Trip Detail**: Single-column layout with collapsible day sections
+- **Drag & Drop**: Touch-optimized with haptic feedback
+- **Activity Pool**: Expandable bottom sheet for space efficiency
+- **Day Management**: Swipe gestures for reordering days
+
+#### Tablet Interface (600px - 1200px)
+- **Navigation**: Side navigation drawer with persistent visibility
+- **Trip Detail**: Two-column layout (days on left, activity pool on right)
+- **Drag & Drop**: Enhanced visual feedback with larger drop zones
+- **Collaboration**: Inline collaborator management panel
+- **Day Management**: Grid view for day cards with drag handles
+
+#### Desktop/Web Interface (> 1200px)
+- **Navigation**: Persistent sidebar with expanded menu items
+- **Trip Detail**: Three-column layout (navigation, days, activity details)
+- **Drag & Drop**: Mouse-optimized with hover states and cursor changes
+- **Multi-window**: Support for multiple trip tabs
+- **Day Management**: Advanced reordering with keyboard shortcuts
+
+### Touch Gesture Support
+
+```dart
+// Enhanced drag and drop for touch devices
+class TouchOptimizedDragTarget extends StatelessWidget {
+  final Widget child;
+  final Function(Activity) onAccept;
+  
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onLongPress: () => _showDragOptions(context),
+      child: DragTarget<Activity>(
+        onAccept: onAccept,
+        builder: (context, candidateData, rejectedData) {
+          return Container(
+            decoration: BoxDecoration(
+              border: candidateData.isNotEmpty 
+                  ? Border.all(color: Theme.of(context).primaryColor, width: 3)
+                  : null,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: child,
+          );
+        },
+      ),
+    );
+  }
+  
+  void _showDragOptions(BuildContext context) {
+    // Show context menu for touch devices
+    HapticFeedback.mediumImpact();
+    // Implementation for touch-specific drag options
+  }
+}
+```
+
+### Cross-Platform Data Synchronization
+
+The responsive design maintains consistent data synchronization across all platforms:
+
+- **Real-time Updates**: Firestore listeners work identically across platforms
+- **Offline Support**: Platform-specific offline persistence configurations
+- **State Management**: Riverpod providers adapt to different screen sizes
+- **Navigation**: Go Router handles platform-specific navigation patterns
+
+## User Experience Design
+
+### Design Philosophy
+The user experience prioritizes simplicity and intuitive interaction patterns. The design follows the principle of "progressive disclosure" - showing only essential information initially while providing easy access to detailed features when needed.
+
+### Navigation Design
+
+#### Clear Visual Hierarchy
+- **Primary Actions**: Prominently displayed with high contrast colors
+- **Secondary Actions**: Accessible but not visually competing with primary actions
+- **Contextual Actions**: Appear only when relevant to current user context
+
+#### Minimal Interaction Requirements
+```dart
+// Example: One-tap activity creation
+class QuickActivityCreation extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FloatingActionButton.extended(
+      onPressed: () => _showQuickCreateDialog(context, ref),
+      icon: const Icon(Icons.add),
+      label: const Text('Add Activity'),
+    );
+  }
+  
+  void _showQuickCreateDialog(BuildContext context, WidgetRef ref) {
+    // Single dialog with smart defaults to minimize user input
+    showDialog(
+      context: context,
+      builder: (context) => QuickActivityDialog(),
+    );
+  }
+}
+```
+
+### Loading States and Feedback
+
+#### Loading Indicators
+- **Global Loading**: Full-screen loading for initial app load
+- **Section Loading**: Skeleton screens for content areas
+- **Action Loading**: Button-specific loading states for user actions
+
+#### Success Feedback
+```dart
+// Global success notification system
+@riverpod
+class FeedbackNotifier extends _$FeedbackNotifier {
+  @override
+  FeedbackState build() => const FeedbackState();
+  
+  void showSuccess(String message) {
+    state = state.copyWith(
+      message: message,
+      type: FeedbackType.success,
+      isVisible: true,
+    );
+    
+    // Auto-hide after 3 seconds
+    Timer(const Duration(seconds: 3), () {
+      state = state.copyWith(isVisible: false);
+    });
+  }
+  
+  void showError(String message) {
+    state = state.copyWith(
+      message: message,
+      type: FeedbackType.error,
+      isVisible: true,
+    );
+  }
+}
+```
+
+### Error Handling UX
+
+#### User-Friendly Error Messages
+- **Network Errors**: "Unable to connect. Please check your internet connection."
+- **Permission Errors**: "You don't have permission to edit this trip. Contact the trip owner."
+- **Validation Errors**: "Please enter a trip name to continue."
+
+#### Recovery Actions
+```dart
+class ErrorRecoveryWidget extends StatelessWidget {
+  final String error;
+  final VoidCallback? onRetry;
+  
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.error_outline, size: 48, color: Colors.orange),
+          const SizedBox(height: 16),
+          Text(error, textAlign: TextAlign.center),
+          if (onRetry != null) ...[
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: onRetry,
+              child: const Text('Try Again'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+```
+
+### Accessibility Considerations
+
+#### Screen Reader Support
+- Semantic labels for all interactive elements
+- Proper heading hierarchy for content structure
+- Alternative text for visual elements
+
+#### Keyboard Navigation
+- Tab order follows logical flow
+- Keyboard shortcuts for common actions
+- Focus indicators for all interactive elements
+
+#### Color and Contrast
+- WCAG AA compliant color contrast ratios
+- Color is not the only means of conveying information
+- High contrast mode support

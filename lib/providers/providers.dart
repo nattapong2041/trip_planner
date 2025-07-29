@@ -10,5 +10,8 @@ export 'trip_provider.dart';
 // Activity providers
 export 'activity_provider.dart';
 
+// Trip detail specific providers
+export 'trip_detail_providers.dart';
+
 // Router provider
 export 'router_provider.dart';

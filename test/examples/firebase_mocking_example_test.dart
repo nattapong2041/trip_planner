@@ -1,12 +1,7 @@
 import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
-import 'package:trip_planner/repositories/auth_repository.dart';
-import 'package:trip_planner/repositories/activity_repository.dart';
-import 'package:trip_planner/repositories/trip_repository.dart';
 import 'package:trip_planner/models/user.dart';
-import 'package:trip_planner/models/activity.dart';
-import 'package:trip_planner/models/trip.dart';
 
 import '../helpers/firebase_mocks.dart';
 

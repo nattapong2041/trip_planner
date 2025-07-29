@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'trip_detail_screen.dart';
+part of 'trip_detail_providers.dart';
 
 // **************************************************************************
 // RiverpodGenerator
@@ -53,6 +53,60 @@ abstract class _$TimelineViewNotifier extends $Notifier<bool> {
     final ref = this.ref as $Ref<bool, bool>;
     final element = ref.element as $ClassProviderElement<
         AnyNotifier<bool, bool>, bool, Object?, Object?>;
+    element.handleValue(ref, created);
+  }
+}
+
+/// Provider for day collapse/expand state
+@ProviderFor(DayCollapseNotifier)
+const dayCollapseNotifierProvider = DayCollapseNotifierProvider._();
+
+/// Provider for day collapse/expand state
+final class DayCollapseNotifierProvider
+    extends $NotifierProvider<DayCollapseNotifier, Map<String, bool>> {
+  /// Provider for day collapse/expand state
+  const DayCollapseNotifierProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'dayCollapseNotifierProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$dayCollapseNotifierHash();
+
+  @$internal
+  @override
+  DayCollapseNotifier create() => DayCollapseNotifier();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Map<String, bool> value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Map<String, bool>>(value),
+    );
+  }
+}
+
+String _$dayCollapseNotifierHash() =>
+    r'bfb2cfe2b7fff2c860ddd194ebd547f6dde72f4a';
+
+abstract class _$DayCollapseNotifier extends $Notifier<Map<String, bool>> {
+  Map<String, bool> build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<Map<String, bool>, Map<String, bool>>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<Map<String, bool>, Map<String, bool>>,
+        Map<String, bool>,
+        Object?,
+        Object?>;
     element.handleValue(ref, created);
   }
 }

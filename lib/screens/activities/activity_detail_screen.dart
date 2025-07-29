@@ -254,26 +254,31 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
               foregroundColor: Theme.of(context).colorScheme.onError,
             ),
             onPressed: () async {
+              final navigator = Navigator.of(context);
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final theme = Theme.of(context);
+              final goRouter = GoRouter.of(context);
+              
               try {
                 await ref.read(activityListNotifierProvider(widget.tripId).notifier)
                     .deleteActivity(activity.id);
                 
                 if (mounted) {
-                  Navigator.of(context).pop(); // Close dialog
-                  context.pop(); // Go back to trip details
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  navigator.pop(); // Close dialog
+                  goRouter.pop(); // Go back to trip details
+                  scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: Row(
                         children: [
                           Icon(
                             Icons.check_circle,
-                            color: Theme.of(context).colorScheme.onPrimary,
+                            color: theme.colorScheme.onPrimary,
                           ),
                           const SizedBox(width: 8),
                           const Text('Activity deleted successfully'),
                         ],
                       ),
-                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      backgroundColor: theme.colorScheme.primary,
                       behavior: SnackBarBehavior.floating,
                       margin: const EdgeInsets.all(8),
                       shape: RoundedRectangleBorder(
@@ -284,11 +289,11 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
                 }
               } catch (error) {
                 if (mounted) {
-                  Navigator.of(context).pop();
-                  ScaffoldMessenger.of(context).showSnackBar(
+                  navigator.pop();
+                  scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: Text('Failed to delete activity: ${error.toString()}'),
-                      backgroundColor: Theme.of(context).colorScheme.error,
+                      backgroundColor: theme.colorScheme.error,
                     ),
                   );
                 }

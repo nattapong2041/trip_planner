@@ -30,7 +30,7 @@ void main() {
     });
 
     test('mock auth repository should work correctly', () async {
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-123',
         email: 'test@example.com',
         displayName: 'Test User',
@@ -48,7 +48,7 @@ void main() {
     });
 
     test('mock auth repository stream should work', () async {
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-stream',
         email: 'stream@example.com',
         displayName: 'Stream User',
@@ -90,7 +90,7 @@ void main() {
     });
 
     test('auth notifier methods should call repository methods', () async {
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-notifier',
         email: 'notifier@example.com',
         displayName: 'Notifier User',
@@ -178,7 +178,7 @@ void main() {
     });
 
     test('should handle multiple provider interactions', () async {
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-multi',
         email: 'multi@example.com',
         displayName: 'Multi User',

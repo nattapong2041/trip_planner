@@ -52,7 +52,7 @@ void main() {
 
     test('should allow access to trips when authenticated', () async {
       // Setup: Mock user for authentication
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-123',
         email: 'test@example.com',
         displayName: 'Test User',
@@ -94,7 +94,7 @@ void main() {
 
     test('should handle route parameters correctly', () async {
       // Setup: Mock user for authentication
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-456',
         email: 'test2@example.com',
         displayName: 'Test User 2',
@@ -141,7 +141,7 @@ void main() {
 
     test('should redirect to auth after sign out', () async {
       // Setup: Start with authenticated user
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-signout',
         email: 'signout@example.com',
         displayName: 'Sign Out User',
@@ -193,7 +193,7 @@ void main() {
 
     test('should handle named routes correctly', () async {
       // Setup: Mock user for authentication
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-named',
         email: 'named@example.com',
         displayName: 'Named Route User',

@@ -3,8 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/trip_provider.dart';
 import '../../utils/responsive.dart';
-import '../../utils/responsive_gestures.dart';
-import '../../widgets/common/responsive_error_display.dart';
 
 class TripCreateScreen extends ConsumerStatefulWidget {
   const TripCreateScreen({super.key});

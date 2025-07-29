@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import '../lib/models/activity.dart';
-import '../lib/models/brainstorm_idea.dart';
-import '../lib/repositories/mock_activity_repository.dart';
+import 'package:trip_planner/models/brainstorm_idea.dart';
+import 'package:trip_planner/repositories/mock_activity_repository.dart';
 
 void main() {
   group('Brainstorming Feature Tests', () {

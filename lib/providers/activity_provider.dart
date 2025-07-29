@@ -404,8 +404,8 @@ class ActivityDetailNotifier extends _$ActivityDetailNotifier {
       final activityRepository = ref.watch(activityRepositoryProvider);
       return await activityRepository.getActivityById(activityId);
     } catch (error) {
-      final appError =
-          const AppError.unknown('Failed to load activity details.');
+      const appError =
+          AppError.unknown('Failed to load activity details.');
       ref.read(errorNotifierProvider.notifier).showError(appError);
       throw appError;
     }

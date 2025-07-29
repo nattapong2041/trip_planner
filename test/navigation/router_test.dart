@@ -63,7 +63,7 @@ void main() {
     testWidgets('should navigate to trip detail with correct parameters',
         (tester) async {
       // Setup: Mock user for authentication
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-123',
         email: 'test@example.com',
         displayName: 'Test User',
@@ -114,7 +114,7 @@ void main() {
     testWidgets('should navigate to activity detail with correct parameters',
         (tester) async {
       // Setup: Mock user for authentication
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-456',
         email: 'test2@example.com',
         displayName: 'Test User 2',
@@ -166,7 +166,7 @@ void main() {
 
     testWidgets('should navigate to trip create screen', (tester) async {
       // Setup: Mock user for authentication
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-789',
         email: 'test3@example.com',
         displayName: 'Test User 3',
@@ -215,7 +215,7 @@ void main() {
 
     testWidgets('should handle sign out and redirect to auth', (tester) async {
       // Setup: Start with authenticated user
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-signout',
         email: 'signout@example.com',
         displayName: 'Sign Out User',

@@ -46,12 +46,7 @@ class FirebaseAuthRepository implements AuthRepository {
   /// Google Sign-In implementation for mobile platforms
   Future<app_user.User?> _signInWithGoogleMobile() async {
     // Trigger the authentication flow
-    final GoogleSignInAccount? googleUser = await GoogleSignIn.instance.authenticate();
-    
-    if (googleUser == null) {
-      // User cancelled the sign-in
-      throw Exception('Google sign-in was cancelled');
-    }
+    final GoogleSignInAccount googleUser = await GoogleSignIn.instance.authenticate();
 
     // Obtain the auth details from the request
     final GoogleSignInAuthentication googleAuth = googleUser.authentication;

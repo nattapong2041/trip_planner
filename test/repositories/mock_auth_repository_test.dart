@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trip_planner/repositories/mock_auth_repository.dart';
 import 'package:trip_planner/models/user.dart';

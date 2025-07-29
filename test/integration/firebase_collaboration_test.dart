@@ -1,11 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trip_planner/repositories/firebase_trip_repository.dart';
 import 'package:trip_planner/repositories/firebase_activity_repository.dart';
-import 'package:trip_planner/models/trip.dart';
-import 'package:trip_planner/models/activity.dart';
-import 'package:trip_planner/models/brainstorm_idea.dart';
-import 'package:trip_planner/models/user.dart';
 import 'package:trip_planner/config/firestore_config.dart';
 
 void main() {
@@ -27,7 +22,6 @@ void main() {
         // This test documents real-time trip streaming
         // In a real integration test, this would use Firestore emulator
         
-        const userId = 'user1';
         expect(tripRepository.getUserTrips, isA<Function>());
         
         // Real test would:

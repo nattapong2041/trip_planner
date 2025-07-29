@@ -9,7 +9,7 @@ void main() {
 
     setUp(() {
       testDate = DateTime(2024, 1, 15, 10, 30);
-      
+
       testIdea = BrainstormIdea(
         id: 'idea_123',
         description: 'Try the famous ramen at this location',
@@ -27,7 +27,8 @@ void main() {
 
     test('should create BrainstormIdea instance with all fields', () {
       expect(testIdea.id, equals('idea_123'));
-      expect(testIdea.description, equals('Try the famous ramen at this location'));
+      expect(testIdea.description,
+          equals('Try the famous ramen at this location'));
       expect(testIdea.createdBy, equals('user_456'));
       expect(testIdea.createdAt, equals(testDate));
     });
@@ -36,7 +37,8 @@ void main() {
       final json = testIdea.toJson();
 
       expect(json['id'], equals('idea_123'));
-      expect(json['description'], equals('Try the famous ramen at this location'));
+      expect(
+          json['description'], equals('Try the famous ramen at this location'));
       expect(json['createdBy'], equals('user_456'));
       expect(json['createdAt'], equals(testDate.toIso8601String()));
     });
@@ -64,7 +66,8 @@ void main() {
       );
 
       expect(updatedIdea.id, equals(testIdea.id));
-      expect(updatedIdea.description, equals('Updated: Try the famous ramen and tempura'));
+      expect(updatedIdea.description,
+          equals('Updated: Try the famous ramen and tempura'));
       expect(updatedIdea.createdBy, equals('user_789'));
       expect(updatedIdea.createdAt, equals(testIdea.createdAt));
     });
@@ -72,7 +75,8 @@ void main() {
     test('should maintain immutability', () {
       final updatedIdea = testIdea.copyWith(description: 'New Description');
 
-      expect(testIdea.description, equals('Try the famous ramen at this location'));
+      expect(testIdea.description,
+          equals('Try the famous ramen at this location'));
       expect(updatedIdea.description, equals('New Description'));
       expect(testIdea.id, equals(updatedIdea.id));
     });
@@ -112,8 +116,9 @@ void main() {
     });
 
     test('should handle long description', () {
-      final longDescription = 'This is a very long brainstorm idea description that contains multiple sentences and detailed information about what we should do at this location. It includes specific recommendations, timing suggestions, and other useful details for the trip planning process.';
-      
+      const longDescription =
+          'This is a very long brainstorm idea description that contains multiple sentences and detailed information about what we should do at this location. It includes specific recommendations, timing suggestions, and other useful details for the trip planning process.';
+
       final longIdea = BrainstormIdea(
         id: 'idea_long',
         description: longDescription,
@@ -126,8 +131,9 @@ void main() {
     });
 
     test('should handle special characters in description', () {
-      const specialDescription = 'Try the ramen 🍜 at 3:30 PM! Cost: ¥1,500-2,000 (approx. \$15-20)';
-      
+      const specialDescription =
+          'Try the ramen 🍜 at 3:30 PM! Cost: ¥1,500-2,000 (approx. \$15-20)';
+
       final specialIdea = BrainstormIdea(
         id: 'idea_special',
         description: specialDescription,
@@ -136,7 +142,7 @@ void main() {
       );
 
       expect(specialIdea.description, equals(specialDescription));
-      
+
       // Test JSON round trip with special characters
       final json = specialIdea.toJson();
       final deserializedIdea = BrainstormIdea.fromJson(json);
@@ -149,7 +155,8 @@ void main() {
         // Missing required fields
       };
 
-      expect(() => BrainstormIdea.fromJson(invalidJson), throwsA(isA<TypeError>()));
+      expect(() => BrainstormIdea.fromJson(invalidJson),
+          throwsA(isA<TypeError>()));
     });
 
     test('should handle different date formats in JSON', () {

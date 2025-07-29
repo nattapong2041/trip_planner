@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:trip_planner/utils/time_slot_utils.dart';
 import 'package:trip_planner/models/activity.dart';
-import 'package:trip_planner/models/brainstorm_idea.dart';
 
 void main() {
   group('TimeSlotUtils', () {

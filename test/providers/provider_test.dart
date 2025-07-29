@@ -2,8 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trip_planner/providers/providers.dart';
 import 'package:trip_planner/models/app_error.dart';
-import 'package:trip_planner/models/trip.dart';
-import 'package:trip_planner/models/activity.dart';
 
 void main() {
   group('Provider Tests', () {

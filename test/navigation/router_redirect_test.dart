@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:go_router/go_router.dart';
 import 'package:trip_planner/providers/auth_provider.dart';
 import 'package:trip_planner/providers/router_provider.dart';
 import 'package:trip_planner/repositories/auth_repository.dart';
@@ -32,7 +31,7 @@ void main() {
 
     test('auth notifier should handle sign in correctly', () async {
       // Setup: Mock user for authentication
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-123',
         email: 'test@example.com',
         displayName: 'Test User',
@@ -72,7 +71,7 @@ void main() {
 
     test('auth notifier should handle sign out correctly', () async {
       // Setup: Start with authenticated user
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-signout',
         email: 'signout@example.com',
         displayName: 'Sign Out User',
@@ -117,7 +116,7 @@ void main() {
     });
 
     test('auth state provider should stream changes correctly', () async {
-      final mockUser = User(
+      const mockUser = User(
         id: 'test-user-stream',
         email: 'stream@example.com',
         displayName: 'Stream User',
@@ -176,14 +175,14 @@ void main() {
     });
 
     test('should handle authentication state changes in auth notifier', () async {
-      final mockUser1 = User(
+      const mockUser1 = User(
         id: 'test-user-1',
         email: 'user1@example.com',
         displayName: 'User 1',
         photoUrl: null,
       );
       
-      final mockUser2 = User(
+      const mockUser2 = User(
         id: 'test-user-2',
         email: 'user2@example.com',
         displayName: 'User 2',

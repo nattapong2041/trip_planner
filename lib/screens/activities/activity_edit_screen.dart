@@ -4,8 +4,6 @@ import 'package:go_router/go_router.dart';
 import '../../models/activity.dart';
 import '../../providers/activity_provider.dart';
 import '../../utils/responsive.dart';
-import '../../utils/responsive_gestures.dart';
-import '../../widgets/common/responsive_error_display.dart';
 
 class ActivityEditScreen extends ConsumerStatefulWidget {
   const ActivityEditScreen({

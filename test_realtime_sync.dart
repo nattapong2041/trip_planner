@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'lib/main.dart';
 
 /// Simple test to verify real-time sync is working
 /// Run this with: flutter run test_realtime_sync.dart

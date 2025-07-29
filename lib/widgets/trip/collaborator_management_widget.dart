@@ -228,7 +228,7 @@ class _CollaboratorManagementWidgetState extends ConsumerState<CollaboratorManag
       _emailController.clear();
       
       // Refresh collaborators list
-      ref.refresh(tripCollaboratorsNotifierProvider(widget.tripId));
+      ref.invalidate(tripCollaboratorsNotifierProvider(widget.tripId));
     } catch (error) {
       // Show additional help if user not found
       if (error.toString().contains('need to sign up')) {
@@ -370,7 +370,7 @@ class _CollaboratorManagementWidgetState extends ConsumerState<CollaboratorManag
         );
         
         // Refresh collaborators list
-        ref.refresh(tripCollaboratorsNotifierProvider(widget.tripId));
+        ref.invalidate(tripCollaboratorsNotifierProvider(widget.tripId));
       } catch (error) {
         // Error is handled by the provider
       }

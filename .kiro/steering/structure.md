@@ -21,8 +21,7 @@
   - JSON serialization support via `json_annotation`
 - `repositories/` - Data access layer
   - Abstract repository interfaces
-  - Mock implementations for development
-  - `mock_data_generator.dart` - Test data generation
+  - Firebase implementations for production
 
 ### State Management
 - `providers/` - Riverpod providers for state management
@@ -65,7 +64,8 @@ All generated files follow these patterns:
 
 ### Repository Pattern
 - Abstract repository interfaces in `repositories/`
-- Mock implementations for development and testing
+- Firebase implementations for production
+- Mockito mocks for testing (see `test/helpers/firebase_mocks.dart`)
 - Dependency injection through Riverpod providers
 
 ### Navigation
@@ -78,3 +78,32 @@ All generated files follow these patterns:
 - Variables/functions: `camelCase`
 - Constants: `camelCase` or `SCREAMING_SNAKE_CASE` for compile-time constants
 - Providers: `camelCaseProvider`
+## Tes
+ting Strategy
+
+### Firebase Repository Mocking
+- Use Mockito to mock Firebase repositories instead of custom mock implementations
+- `test/helpers/firebase_mocks.dart` provides comprehensive mocking utilities
+- `FirebaseMocks` class offers convenient helper methods for common test scenarios
+- Stream controllers for testing real-time updates
+- Test data classes in `TestData` for consistent test fixtures
+
+### Test Organization
+- `test/examples/` - Basic mocking examples and tutorials
+- `test/providers/` - Provider-level tests with mocked repositories
+- `test/models/` - Model serialization and validation tests
+- `test/integration/` - Integration tests (may use Firebase emulators)
+- `test/helpers/` - Shared testing utilities and mocks
+
+### Running Tests
+```bash
+# Generate mocks after adding new repository methods
+dart run build_runner build --delete-conflicting-outputs
+
+# Run all tests
+flutter test
+
+# Run specific test categories
+flutter test test/providers/
+flutter test test/examples/
+```

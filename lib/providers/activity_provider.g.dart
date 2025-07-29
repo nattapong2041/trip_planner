@@ -193,7 +193,7 @@ final class ActivityDetailNotifierProvider
 }
 
 String _$activityDetailNotifierHash() =>
-    r'8dc652d2d6a6a1c0764720e697bc472077f5ebf0';
+    r'ea507fd7a5d992625b0a3ddbcb4e9bc7a556c2a5';
 
 /// Provider for getting a single activity by ID
 final class ActivityDetailNotifierFamily extends $Family

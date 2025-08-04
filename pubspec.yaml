@@ -35,6 +35,7 @@ dependencies:
   # Image Management
   image_picker: ^1.0.7
   flutter_image_compress: ^2.1.0
+  permission_handler: ^11.3.1
   
   # Utils
   freezed_annotation: ^3.0.0 

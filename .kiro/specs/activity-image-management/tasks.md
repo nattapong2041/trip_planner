@@ -92,15 +92,15 @@
     - Implement proper navigation and back button handling
     - _Requirements: 5.2, 5.3, 8.2_
 
-- [ ] 7. Create image picker and upload UI
-  - [ ] 7.1 Create ImagePickerBottomSheet widget
+- [x] 7. Create image picker and upload UI
+  - [x] 7.1 Create ImagePickerBottomSheet widget
     - Design bottom sheet with camera and gallery options
     - Add proper permission handling and error messages
     - Implement source selection with clear visual indicators
     - Add cancel functionality and proper dismissal
     - _Requirements: 1.2, 1.3_
 
-  - [ ] 7.2 Create ImageUploadProgressDialog widget
+  - [x] 7.2 Create ImageUploadProgressDialog widget
     - Design progress dialog for compression and upload
     - Show different states (optimizing, uploading with percentage)
     - Add cancel functionality for ongoing uploads

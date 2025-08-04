@@ -21,15 +21,15 @@
     - Regenerate Freezed files for Activity model
     - _Requirements: 1.1, 2.2_
 
-- [ ] 3. Implement image service layer
-  - [ ] 3.1 Create ImageService interface and implementation
+- [x] 3. Implement image service layer
+  - [x] 3.1 Create ImageService interface and implementation
     - Define abstract ImageService interface with methods for picking and compression
     - Implement ImageServiceImpl with image_picker integration
     - Add image compression logic using flutter_image_compress
     - Implement file size validation and thumbnail generation
     - _Requirements: 1.2, 3.1, 3.2_
 
-  - [ ] 3.2 Create ImageStorageService for Firebase Storage
+  - [x] 3.2 Create ImageStorageService for Firebase Storage
     - Define abstract ImageStorageService interface
     - Implement FirebaseImageStorageService with upload, delete, and URL methods
     - Add upload progress tracking functionality

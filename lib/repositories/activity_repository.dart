@@ -1,4 +1,5 @@
 import '../models/activity.dart';
+import '../models/activity_image.dart';
 import '../models/brainstorm_idea.dart';
 
 /// Abstract repository interface for activity management operations
@@ -46,4 +47,20 @@ abstract class ActivityRepository {
   /// Get a single activity by ID
   /// Returns null if activity doesn't exist
   Future<Activity?> getActivityById(String activityId);
+  
+  /// Add image to activity
+  /// Returns the updated activity with the new image
+  Future<Activity> addImageToActivity(String activityId, ActivityImage image);
+  
+  /// Remove image from activity
+  /// Returns the updated activity without the image
+  Future<Activity> removeImageFromActivity(String activityId, String imageId);
+  
+  /// Reorder images in activity
+  /// Updates the order field of images for real-time synchronization
+  Future<Activity> reorderActivityImages(String activityId, List<String> imageIds);
+  
+  /// Update image caption
+  /// Returns the updated activity with the modified image caption
+  Future<Activity> updateImageCaption(String activityId, String imageId, String caption);
 }

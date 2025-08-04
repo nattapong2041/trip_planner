@@ -36,15 +36,15 @@
     - Implement error handling for storage operations
     - _Requirements: 4.1, 4.2, 4.4_
 
-- [ ] 4. Extend repository layer for image operations
-  - [ ] 4.1 Add image methods to ActivityRepository interface
+- [x] 4. Extend repository layer for image operations
+  - [x] 4.1 Add image methods to ActivityRepository interface
     - Add addImageToActivity method signature
     - Add removeImageFromActivity method signature
     - Add reorderActivityImages method signature
     - Add updateImageCaption method signature
     - _Requirements: 1.4, 6.2, 8.3_
 
-  - [ ] 4.2 Implement image methods in FirebaseActivityRepository
+  - [x] 4.2 Implement image methods in FirebaseActivityRepository
     - Implement addImageToActivity with Firestore updates
     - Implement removeImageFromActivity with proper cleanup
     - Implement reorderActivityImages with batch updates

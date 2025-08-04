@@ -7,6 +7,7 @@ import 'dart:async' as _i4;
 
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:trip_planner/models/activity.dart' as _i2;
+import 'package:trip_planner/models/activity_image.dart' as _i6;
 import 'package:trip_planner/models/brainstorm_idea.dart' as _i5;
 import 'package:trip_planner/repositories/firebase_activity_repository.dart'
     as _i3;
@@ -246,4 +247,107 @@ class MockFirebaseActivityRepository extends _i1.Mock
         ),
         returnValue: _i4.Future<_i2.Activity?>.value(),
       ) as _i4.Future<_i2.Activity?>);
+
+  @override
+  _i4.Future<_i2.Activity> addImageToActivity(
+    String? activityId,
+    _i6.ActivityImage? image,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #addImageToActivity,
+          [
+            activityId,
+            image,
+          ],
+        ),
+        returnValue: _i4.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #addImageToActivity,
+            [
+              activityId,
+              image,
+            ],
+          ),
+        )),
+      ) as _i4.Future<_i2.Activity>);
+
+  @override
+  _i4.Future<_i2.Activity> removeImageFromActivity(
+    String? activityId,
+    String? imageId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #removeImageFromActivity,
+          [
+            activityId,
+            imageId,
+          ],
+        ),
+        returnValue: _i4.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #removeImageFromActivity,
+            [
+              activityId,
+              imageId,
+            ],
+          ),
+        )),
+      ) as _i4.Future<_i2.Activity>);
+
+  @override
+  _i4.Future<_i2.Activity> reorderActivityImages(
+    String? activityId,
+    List<String>? imageIds,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #reorderActivityImages,
+          [
+            activityId,
+            imageIds,
+          ],
+        ),
+        returnValue: _i4.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #reorderActivityImages,
+            [
+              activityId,
+              imageIds,
+            ],
+          ),
+        )),
+      ) as _i4.Future<_i2.Activity>);
+
+  @override
+  _i4.Future<_i2.Activity> updateImageCaption(
+    String? activityId,
+    String? imageId,
+    String? caption,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateImageCaption,
+          [
+            activityId,
+            imageId,
+            caption,
+          ],
+        ),
+        returnValue: _i4.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #updateImageCaption,
+            [
+              activityId,
+              imageId,
+              caption,
+            ],
+          ),
+        )),
+      ) as _i4.Future<_i2.Activity>);
 }

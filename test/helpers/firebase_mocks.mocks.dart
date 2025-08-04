@@ -7,18 +7,19 @@ import 'dart:async' as _i5;
 
 import 'package:mockito/mockito.dart' as _i1;
 import 'package:trip_planner/models/activity.dart' as _i2;
+import 'package:trip_planner/models/activity_image.dart' as _i9;
 import 'package:trip_planner/models/brainstorm_idea.dart' as _i8;
 import 'package:trip_planner/models/trip.dart' as _i3;
 import 'package:trip_planner/models/user.dart' as _i6;
 import 'package:trip_planner/repositories/activity_repository.dart' as _i7;
 import 'package:trip_planner/repositories/auth_repository.dart' as _i4;
 import 'package:trip_planner/repositories/firebase_activity_repository.dart'
-    as _i11;
-import 'package:trip_planner/repositories/firebase_auth_repository.dart'
-    as _i10;
-import 'package:trip_planner/repositories/firebase_trip_repository.dart'
     as _i12;
-import 'package:trip_planner/repositories/trip_repository.dart' as _i9;
+import 'package:trip_planner/repositories/firebase_auth_repository.dart'
+    as _i11;
+import 'package:trip_planner/repositories/firebase_trip_repository.dart'
+    as _i13;
+import 'package:trip_planner/repositories/trip_repository.dart' as _i10;
 
 // ignore_for_file: type=lint
 // ignore_for_file: avoid_redundant_argument_values
@@ -308,12 +309,115 @@ class MockActivityRepository extends _i1.Mock
         ),
         returnValue: _i5.Future<_i2.Activity?>.value(),
       ) as _i5.Future<_i2.Activity?>);
+
+  @override
+  _i5.Future<_i2.Activity> addImageToActivity(
+    String? activityId,
+    _i9.ActivityImage? image,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #addImageToActivity,
+          [
+            activityId,
+            image,
+          ],
+        ),
+        returnValue: _i5.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #addImageToActivity,
+            [
+              activityId,
+              image,
+            ],
+          ),
+        )),
+      ) as _i5.Future<_i2.Activity>);
+
+  @override
+  _i5.Future<_i2.Activity> removeImageFromActivity(
+    String? activityId,
+    String? imageId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #removeImageFromActivity,
+          [
+            activityId,
+            imageId,
+          ],
+        ),
+        returnValue: _i5.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #removeImageFromActivity,
+            [
+              activityId,
+              imageId,
+            ],
+          ),
+        )),
+      ) as _i5.Future<_i2.Activity>);
+
+  @override
+  _i5.Future<_i2.Activity> reorderActivityImages(
+    String? activityId,
+    List<String>? imageIds,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #reorderActivityImages,
+          [
+            activityId,
+            imageIds,
+          ],
+        ),
+        returnValue: _i5.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #reorderActivityImages,
+            [
+              activityId,
+              imageIds,
+            ],
+          ),
+        )),
+      ) as _i5.Future<_i2.Activity>);
+
+  @override
+  _i5.Future<_i2.Activity> updateImageCaption(
+    String? activityId,
+    String? imageId,
+    String? caption,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateImageCaption,
+          [
+            activityId,
+            imageId,
+            caption,
+          ],
+        ),
+        returnValue: _i5.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #updateImageCaption,
+            [
+              activityId,
+              imageId,
+              caption,
+            ],
+          ),
+        )),
+      ) as _i5.Future<_i2.Activity>);
 }
 
 /// A class which mocks [TripRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
-class MockTripRepository extends _i1.Mock implements _i9.TripRepository {
+class MockTripRepository extends _i1.Mock implements _i10.TripRepository {
   MockTripRepository() {
     _i1.throwOnMissingStub(this);
   }
@@ -426,7 +530,7 @@ class MockTripRepository extends _i1.Mock implements _i9.TripRepository {
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockFirebaseAuthRepository extends _i1.Mock
-    implements _i10.FirebaseAuthRepository {
+    implements _i11.FirebaseAuthRepository {
   MockFirebaseAuthRepository() {
     _i1.throwOnMissingStub(this);
   }
@@ -470,7 +574,7 @@ class MockFirebaseAuthRepository extends _i1.Mock
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockFirebaseActivityRepository extends _i1.Mock
-    implements _i11.FirebaseActivityRepository {
+    implements _i12.FirebaseActivityRepository {
   MockFirebaseActivityRepository() {
     _i1.throwOnMissingStub(this);
   }
@@ -677,13 +781,116 @@ class MockFirebaseActivityRepository extends _i1.Mock
         ),
         returnValue: _i5.Future<_i2.Activity?>.value(),
       ) as _i5.Future<_i2.Activity?>);
+
+  @override
+  _i5.Future<_i2.Activity> addImageToActivity(
+    String? activityId,
+    _i9.ActivityImage? image,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #addImageToActivity,
+          [
+            activityId,
+            image,
+          ],
+        ),
+        returnValue: _i5.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #addImageToActivity,
+            [
+              activityId,
+              image,
+            ],
+          ),
+        )),
+      ) as _i5.Future<_i2.Activity>);
+
+  @override
+  _i5.Future<_i2.Activity> removeImageFromActivity(
+    String? activityId,
+    String? imageId,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #removeImageFromActivity,
+          [
+            activityId,
+            imageId,
+          ],
+        ),
+        returnValue: _i5.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #removeImageFromActivity,
+            [
+              activityId,
+              imageId,
+            ],
+          ),
+        )),
+      ) as _i5.Future<_i2.Activity>);
+
+  @override
+  _i5.Future<_i2.Activity> reorderActivityImages(
+    String? activityId,
+    List<String>? imageIds,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #reorderActivityImages,
+          [
+            activityId,
+            imageIds,
+          ],
+        ),
+        returnValue: _i5.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #reorderActivityImages,
+            [
+              activityId,
+              imageIds,
+            ],
+          ),
+        )),
+      ) as _i5.Future<_i2.Activity>);
+
+  @override
+  _i5.Future<_i2.Activity> updateImageCaption(
+    String? activityId,
+    String? imageId,
+    String? caption,
+  ) =>
+      (super.noSuchMethod(
+        Invocation.method(
+          #updateImageCaption,
+          [
+            activityId,
+            imageId,
+            caption,
+          ],
+        ),
+        returnValue: _i5.Future<_i2.Activity>.value(_FakeActivity_0(
+          this,
+          Invocation.method(
+            #updateImageCaption,
+            [
+              activityId,
+              imageId,
+              caption,
+            ],
+          ),
+        )),
+      ) as _i5.Future<_i2.Activity>);
 }
 
 /// A class which mocks [FirebaseTripRepository].
 ///
 /// See the documentation for Mockito's code generation for more information.
 class MockFirebaseTripRepository extends _i1.Mock
-    implements _i12.FirebaseTripRepository {
+    implements _i13.FirebaseTripRepository {
   MockFirebaseTripRepository() {
     _i1.throwOnMissingStub(this);
   }

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:logger/logger.dart';
 import '../models/activity.dart';
+import '../models/activity_image.dart';
 import '../models/brainstorm_idea.dart';
 import '../config/firestore_config.dart';
 import 'activity_repository.dart';
@@ -453,6 +454,239 @@ class FirebaseActivityRepository implements ActivityRepository {
     } catch (e) {
       _logger.e('Error getting activity by ID: $e');
       throw Exception('Failed to get activity: $e');
+    }
+  }
+
+  @override
+  Future<Activity> addImageToActivity(
+      String activityId, ActivityImage image) async {
+    try {
+      _logger.d('Adding image to activity: $activityId');
+
+      if (activityId.isEmpty) {
+        throw Exception('Activity ID cannot be empty');
+      }
+
+      // Get the current activity
+      final activityDoc = await _firestore
+          .collection(_activitiesCollection)
+          .doc(activityId)
+          .get();
+
+      if (!activityDoc.exists) {
+        throw Exception('Activity not found');
+      }
+
+      final activityData = activityDoc.data()!;
+      activityData['id'] = activityDoc.id;
+      final activity = Activity.fromJson(activityData);
+
+      // Check image limit
+      if (activity.images.length >= 5) {
+        throw Exception('Maximum of 5 images allowed per activity');
+      }
+
+      // Create new image with generated ID and order
+      final newImage = image.copyWith(
+        id: _firestore.collection('temp').doc().id,
+        uploadedAt: DateTime.now(),
+        order: activity.images.length,
+      );
+
+      // Add the new image to the existing list
+      final updatedImages = [...activity.images, newImage];
+
+      // Update the activity with the new images
+      await _firestore
+          .collection(_activitiesCollection)
+          .doc(activityId)
+          .update({
+        'images': updatedImages.map((img) => img.toFirestoreJson()).toList(),
+      });
+
+      _logger.i('Image added to activity: $activityId');
+
+      return activity.copyWith(images: updatedImages);
+    } catch (e) {
+      _logger.e('Error adding image to activity: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Activity> removeImageFromActivity(
+      String activityId, String imageId) async {
+    try {
+      _logger.d('Removing image $imageId from activity: $activityId');
+
+      if (activityId.isEmpty || imageId.isEmpty) {
+        throw Exception('Activity ID and Image ID cannot be empty');
+      }
+
+      // Get the current activity
+      final activityDoc = await _firestore
+          .collection(_activitiesCollection)
+          .doc(activityId)
+          .get();
+
+      if (!activityDoc.exists) {
+        throw Exception('Activity not found');
+      }
+
+      final activityData = activityDoc.data()!;
+      activityData['id'] = activityDoc.id;
+      final activity = Activity.fromJson(activityData);
+
+      // Verify the image exists before removing
+      if (!activity.images.any((img) => img.id == imageId)) {
+        throw Exception('Image not found');
+      }
+
+      final updatedImages =
+          activity.images.where((img) => img.id != imageId).toList();
+
+      // Reorder remaining images
+      for (int i = 0; i < updatedImages.length; i++) {
+        updatedImages[i] = updatedImages[i].copyWith(order: i);
+      }
+
+      // Update the activity with the filtered images
+      await _firestore
+          .collection(_activitiesCollection)
+          .doc(activityId)
+          .update({
+        'images': updatedImages.map((img) => img.toFirestoreJson()).toList(),
+      });
+
+      _logger.i('Image removed from activity: $activityId');
+
+      return activity.copyWith(images: updatedImages);
+    } catch (e) {
+      _logger.e('Error removing image from activity: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Activity> reorderActivityImages(
+      String activityId, List<String> imageIds) async {
+    try {
+      _logger.d('Reordering images for activity: $activityId');
+
+      if (activityId.isEmpty) {
+        throw Exception('Activity ID cannot be empty');
+      }
+
+      // Get the current activity
+      final activityDoc = await _firestore
+          .collection(_activitiesCollection)
+          .doc(activityId)
+          .get();
+
+      if (!activityDoc.exists) {
+        throw Exception('Activity not found');
+      }
+
+      final activityData = activityDoc.data()!;
+      activityData['id'] = activityDoc.id;
+      final activity = Activity.fromJson(activityData);
+
+      // Create a map of existing images for quick lookup
+      final imageMap = {for (var image in activity.images) image.id: image};
+
+      // Reorder images based on the provided order
+      final reorderedImages = <ActivityImage>[];
+      for (int i = 0; i < imageIds.length; i++) {
+        final imageId = imageIds[i];
+        final image = imageMap[imageId];
+        if (image != null) {
+          reorderedImages.add(image.copyWith(order: i));
+        }
+      }
+
+      // Add any images that weren't in the reorder list (shouldn't happen normally)
+      for (final image in activity.images) {
+        if (!imageIds.contains(image.id)) {
+          reorderedImages.add(image.copyWith(order: reorderedImages.length));
+        }
+      }
+
+      // Use batch update for better performance and atomicity
+      final batch = _firestore.batch();
+      final activityRef =
+          _firestore.collection(_activitiesCollection).doc(activityId);
+
+      batch.update(activityRef, {
+        'images': reorderedImages.map((img) => img.toFirestoreJson()).toList(),
+      });
+
+      await batch.commit();
+
+      _logger.i('Images reordered for activity: $activityId');
+
+      return activity.copyWith(images: reorderedImages);
+    } catch (e) {
+      _logger.e('Error reordering images: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Activity> updateImageCaption(
+      String activityId, String imageId, String caption) async {
+    try {
+      _logger.d('Updating image caption for activity: $activityId');
+
+      if (activityId.isEmpty || imageId.isEmpty) {
+        throw Exception('Activity ID and Image ID cannot be empty');
+      }
+
+      // Get the current activity
+      final activityDoc = await _firestore
+          .collection(_activitiesCollection)
+          .doc(activityId)
+          .get();
+
+      if (!activityDoc.exists) {
+        throw Exception('Activity not found');
+      }
+
+      final activityData = activityDoc.data()!;
+      activityData['id'] = activityDoc.id;
+      final activity = Activity.fromJson(activityData);
+
+      // Find the image to update
+      final imageIndex = activity.images.indexWhere((img) => img.id == imageId);
+      if (imageIndex == -1) {
+        throw Exception('Image not found');
+      }
+
+      // Validate caption length
+      final trimmedCaption = caption.trim();
+      if (trimmedCaption.length > 500) {
+        throw Exception('Caption cannot exceed 500 characters');
+      }
+
+      // Update the specific image's caption
+      final updatedImages = List<ActivityImage>.from(activity.images);
+      updatedImages[imageIndex] = updatedImages[imageIndex].copyWith(
+        caption: trimmedCaption.isEmpty ? null : trimmedCaption,
+      );
+
+      // Update the activity with the updated images
+      await _firestore
+          .collection(_activitiesCollection)
+          .doc(activityId)
+          .update({
+        'images': updatedImages.map((img) => img.toFirestoreJson()).toList(),
+      });
+
+      _logger.i('Image caption updated for activity: $activityId');
+
+      return activity.copyWith(images: updatedImages);
+    } catch (e) {
+      _logger.e('Error updating image caption: $e');
+      rethrow;
     }
   }
 }

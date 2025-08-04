@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'brainstorm_idea.dart';
+import 'activity_image.dart';
 
 part 'activity.freezed.dart';
 part 'activity.g.dart';
@@ -40,11 +41,24 @@ abstract class Activity with _$Activity {
     required String createdBy,
     @TimestampConverter() required DateTime createdAt,
     @Default([]) List<BrainstormIdea> brainstormIdeas,
+    @Default([]) List<ActivityImage> images,
   }) = _Activity;
   
   const Activity._();
   
   factory Activity.fromJson(Map<String, dynamic> json) => _$ActivityFromJson(json);
+  
+  /// Check if activity can accept more images (max 5)
+  bool get canAddMoreImages => images.length < 5;
+  
+  /// Get images count display text
+  String get imagesCountText => '${images.length} of 5 images';
+  
+  /// Get the number of images in this activity
+  int get imageCount => images.length;
+  
+  /// Check if activity has reached maximum image capacity
+  bool get isAtImageCapacity => images.length >= 5;
   
   /// Convert to JSON with proper serialization for Firestore
   Map<String, dynamic> toFirestoreJson() {
@@ -53,6 +67,8 @@ abstract class Activity with _$Activity {
     json['createdAt'] = Timestamp.fromDate(createdAt);
     // Ensure brainstormIdeas are properly serialized as JSON objects
     json['brainstormIdeas'] = brainstormIdeas.map((idea) => idea.toJson()).toList();
+    // Ensure images are properly serialized as JSON objects
+    json['images'] = images.map((image) => image.toFirestoreJson()).toList();
     return json;
   }
 }

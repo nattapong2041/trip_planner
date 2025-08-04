@@ -27,6 +27,7 @@ mixin _$Activity {
   @TimestampConverter()
   DateTime get createdAt;
   List<BrainstormIdea> get brainstormIdeas;
+  List<ActivityImage> get images;
 
   /// Create a copy of Activity
   /// with the given fields replaced by the non-null parameter values.
@@ -61,7 +62,8 @@ mixin _$Activity {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             const DeepCollectionEquality()
-                .equals(other.brainstormIdeas, brainstormIdeas));
+                .equals(other.brainstormIdeas, brainstormIdeas) &&
+            const DeepCollectionEquality().equals(other.images, images));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -79,11 +81,12 @@ mixin _$Activity {
       timeSlot,
       createdBy,
       createdAt,
-      const DeepCollectionEquality().hash(brainstormIdeas));
+      const DeepCollectionEquality().hash(brainstormIdeas),
+      const DeepCollectionEquality().hash(images));
 
   @override
   String toString() {
-    return 'Activity(id: $id, tripId: $tripId, place: $place, activityType: $activityType, price: $price, notes: $notes, assignedDay: $assignedDay, dayOrder: $dayOrder, timeSlot: $timeSlot, createdBy: $createdBy, createdAt: $createdAt, brainstormIdeas: $brainstormIdeas)';
+    return 'Activity(id: $id, tripId: $tripId, place: $place, activityType: $activityType, price: $price, notes: $notes, assignedDay: $assignedDay, dayOrder: $dayOrder, timeSlot: $timeSlot, createdBy: $createdBy, createdAt: $createdAt, brainstormIdeas: $brainstormIdeas, images: $images)';
   }
 }
 
@@ -104,7 +107,8 @@ abstract mixin class $ActivityCopyWith<$Res> {
       String? timeSlot,
       String createdBy,
       @TimestampConverter() DateTime createdAt,
-      List<BrainstormIdea> brainstormIdeas});
+      List<BrainstormIdea> brainstormIdeas,
+      List<ActivityImage> images});
 }
 
 /// @nodoc
@@ -131,6 +135,7 @@ class _$ActivityCopyWithImpl<$Res> implements $ActivityCopyWith<$Res> {
     Object? createdBy = null,
     Object? createdAt = null,
     Object? brainstormIdeas = null,
+    Object? images = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -181,6 +186,10 @@ class _$ActivityCopyWithImpl<$Res> implements $ActivityCopyWith<$Res> {
           ? _self.brainstormIdeas
           : brainstormIdeas // ignore: cast_nullable_to_non_nullable
               as List<BrainstormIdea>,
+      images: null == images
+          ? _self.images
+          : images // ignore: cast_nullable_to_non_nullable
+              as List<ActivityImage>,
     ));
   }
 }
@@ -290,7 +299,8 @@ extension ActivityPatterns on Activity {
             String? timeSlot,
             String createdBy,
             @TimestampConverter() DateTime createdAt,
-            List<BrainstormIdea> brainstormIdeas)?
+            List<BrainstormIdea> brainstormIdeas,
+            List<ActivityImage> images)?
         $default, {
     required TResult orElse(),
   }) {
@@ -309,7 +319,8 @@ extension ActivityPatterns on Activity {
             _that.timeSlot,
             _that.createdBy,
             _that.createdAt,
-            _that.brainstormIdeas);
+            _that.brainstormIdeas,
+            _that.images);
       case _:
         return orElse();
     }
@@ -342,7 +353,8 @@ extension ActivityPatterns on Activity {
             String? timeSlot,
             String createdBy,
             @TimestampConverter() DateTime createdAt,
-            List<BrainstormIdea> brainstormIdeas)
+            List<BrainstormIdea> brainstormIdeas,
+            List<ActivityImage> images)
         $default,
   ) {
     final _that = this;
@@ -360,7 +372,8 @@ extension ActivityPatterns on Activity {
             _that.timeSlot,
             _that.createdBy,
             _that.createdAt,
-            _that.brainstormIdeas);
+            _that.brainstormIdeas,
+            _that.images);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -392,7 +405,8 @@ extension ActivityPatterns on Activity {
             String? timeSlot,
             String createdBy,
             @TimestampConverter() DateTime createdAt,
-            List<BrainstormIdea> brainstormIdeas)?
+            List<BrainstormIdea> brainstormIdeas,
+            List<ActivityImage> images)?
         $default,
   ) {
     final _that = this;
@@ -410,7 +424,8 @@ extension ActivityPatterns on Activity {
             _that.timeSlot,
             _that.createdBy,
             _that.createdAt,
-            _that.brainstormIdeas);
+            _that.brainstormIdeas,
+            _that.images);
       case _:
         return null;
     }
@@ -432,8 +447,10 @@ class _Activity extends Activity {
       this.timeSlot,
       required this.createdBy,
       @TimestampConverter() required this.createdAt,
-      final List<BrainstormIdea> brainstormIdeas = const []})
+      final List<BrainstormIdea> brainstormIdeas = const [],
+      final List<ActivityImage> images = const []})
       : _brainstormIdeas = brainstormIdeas,
+        _images = images,
         super._();
   factory _Activity.fromJson(Map<String, dynamic> json) =>
       _$ActivityFromJson(json);
@@ -470,6 +487,15 @@ class _Activity extends Activity {
     if (_brainstormIdeas is EqualUnmodifiableListView) return _brainstormIdeas;
     // ignore: implicit_dynamic_type
     return EqualUnmodifiableListView(_brainstormIdeas);
+  }
+
+  final List<ActivityImage> _images;
+  @override
+  @JsonKey()
+  List<ActivityImage> get images {
+    if (_images is EqualUnmodifiableListView) return _images;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_images);
   }
 
   /// Create a copy of Activity
@@ -510,7 +536,8 @@ class _Activity extends Activity {
             (identical(other.createdAt, createdAt) ||
                 other.createdAt == createdAt) &&
             const DeepCollectionEquality()
-                .equals(other._brainstormIdeas, _brainstormIdeas));
+                .equals(other._brainstormIdeas, _brainstormIdeas) &&
+            const DeepCollectionEquality().equals(other._images, _images));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -528,11 +555,12 @@ class _Activity extends Activity {
       timeSlot,
       createdBy,
       createdAt,
-      const DeepCollectionEquality().hash(_brainstormIdeas));
+      const DeepCollectionEquality().hash(_brainstormIdeas),
+      const DeepCollectionEquality().hash(_images));
 
   @override
   String toString() {
-    return 'Activity(id: $id, tripId: $tripId, place: $place, activityType: $activityType, price: $price, notes: $notes, assignedDay: $assignedDay, dayOrder: $dayOrder, timeSlot: $timeSlot, createdBy: $createdBy, createdAt: $createdAt, brainstormIdeas: $brainstormIdeas)';
+    return 'Activity(id: $id, tripId: $tripId, place: $place, activityType: $activityType, price: $price, notes: $notes, assignedDay: $assignedDay, dayOrder: $dayOrder, timeSlot: $timeSlot, createdBy: $createdBy, createdAt: $createdAt, brainstormIdeas: $brainstormIdeas, images: $images)';
   }
 }
 
@@ -555,7 +583,8 @@ abstract mixin class _$ActivityCopyWith<$Res>
       String? timeSlot,
       String createdBy,
       @TimestampConverter() DateTime createdAt,
-      List<BrainstormIdea> brainstormIdeas});
+      List<BrainstormIdea> brainstormIdeas,
+      List<ActivityImage> images});
 }
 
 /// @nodoc
@@ -582,6 +611,7 @@ class __$ActivityCopyWithImpl<$Res> implements _$ActivityCopyWith<$Res> {
     Object? createdBy = null,
     Object? createdAt = null,
     Object? brainstormIdeas = null,
+    Object? images = null,
   }) {
     return _then(_Activity(
       id: null == id
@@ -632,6 +662,10 @@ class __$ActivityCopyWithImpl<$Res> implements _$ActivityCopyWith<$Res> {
           ? _self._brainstormIdeas
           : brainstormIdeas // ignore: cast_nullable_to_non_nullable
               as List<BrainstormIdea>,
+      images: null == images
+          ? _self._images
+          : images // ignore: cast_nullable_to_non_nullable
+              as List<ActivityImage>,
     ));
   }
 }

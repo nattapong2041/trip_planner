@@ -22,6 +22,10 @@ _Activity _$ActivityFromJson(Map<String, dynamic> json) => _Activity(
               ?.map((e) => BrainstormIdea.fromJson(e as Map<String, dynamic>))
               .toList() ??
           const [],
+      images: (json['images'] as List<dynamic>?)
+              ?.map((e) => ActivityImage.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          const [],
     );
 
 Map<String, dynamic> _$ActivityToJson(_Activity instance) => <String, dynamic>{
@@ -37,4 +41,5 @@ Map<String, dynamic> _$ActivityToJson(_Activity instance) => <String, dynamic>{
       'createdBy': instance.createdBy,
       'createdAt': const TimestampConverter().toJson(instance.createdAt),
       'brainstormIdeas': instance.brainstormIdeas,
+      'images': instance.images,
     };

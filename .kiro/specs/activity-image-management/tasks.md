@@ -6,15 +6,15 @@
   - Update build configurations for camera and photo library permissions
   - _Requirements: 1.2, 3.1, 4.1_
 
-- [ ] 2. Create core data models for image management
-  - [ ] 2.1 Create ActivityImage model with Freezed
+- [x] 2. Create core data models for image management
+  - [x] 2.1 Create ActivityImage model with Freezed
     - Define ActivityImage class with all required fields (id, url, storagePath, uploadedBy, etc.)
     - Add JSON serialization support
     - Implement helper methods for file size formatting and time display
     - Generate Freezed and JSON serialization files
     - _Requirements: 8.1, 8.2_
 
-  - [ ] 2.2 Extend Activity model to include images
+  - [x] 2.2 Extend Activity model to include images
     - Add images field as List<ActivityImage> to Activity model
     - Add helper methods for image count and capacity checking
     - Update toFirestoreJson method to handle images serialization

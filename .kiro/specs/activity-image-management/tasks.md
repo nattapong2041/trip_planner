@@ -67,8 +67,8 @@
     - Add proper provider configuration and error handling
     - _Requirements: 4.1, 3.1_
 
-- [ ] 6. Build image gallery UI components
-  - [ ] 6.1 Create ActivityImageCard widget
+- [x] 6. Build image gallery UI components
+  - [x] 6.1 Create ActivityImageCard widget
     - Design individual image card with thumbnail display
     - Add loading states and error handling
     - Implement tap-to-fullscreen functionality
@@ -76,7 +76,7 @@
     - Show image metadata (uploader, timestamp, file size)
     - _Requirements: 5.1, 5.2, 6.1, 8.2_
 
-  - [ ] 6.2 Create ActivityImageGallery widget
+  - [x] 6.2 Create ActivityImageGallery widget
     - Implement horizontal scrollable gallery layout
     - Add empty state placeholder when no images
     - Show image count indicator (X of 5 images)
@@ -84,7 +84,7 @@
     - Add "Add Image" button with proper state management
     - _Requirements: 1.1, 2.1, 5.1, 5.3_
 
-  - [ ] 6.3 Create FullScreenImageViewer widget
+  - [x] 6.3 Create FullScreenImageViewer widget
     - Implement full-screen image display with zoom capabilities
     - Add swipe navigation between images
     - Show image details overlay (caption, uploader, timestamp)

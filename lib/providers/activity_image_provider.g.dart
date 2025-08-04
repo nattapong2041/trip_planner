@@ -48,7 +48,7 @@ final class ImageServiceProvider
   }
 }
 
-String _$imageServiceHash() => r'4db4d59618c8e10dcf82c4eef62c90331bd86692';
+String _$imageServiceHash() => r'e785a12d1ba331875be0d1b617adf615ddc0d2ef';
 
 /// Provider for the ImageStorageService instance
 @ProviderFor(imageStorageService)
@@ -151,7 +151,7 @@ final class ActivityImageNotifierProvider extends $NotifierProvider<
 }
 
 String _$activityImageNotifierHash() =>
-    r'26ce20988afeca565b82c978215ab281e97dbf87';
+    r'19a4db75c16a5b64860df64b353ad1b166735b78';
 
 /// Notifier for managing activity images
 final class ActivityImageNotifierFamily extends $Family

@@ -22,7 +22,8 @@ class ActivityImageGallery extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ActivityImageGallery> createState() => _ActivityImageGalleryState();
+  ConsumerState<ActivityImageGallery> createState() =>
+      _ActivityImageGalleryState();
 }
 
 class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
@@ -37,37 +38,47 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final imagesAsync = ref.watch(activityImageNotifierProvider(widget.activityId));
-    
-    return SizedBox(
-      height: 160,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header with image count
-          _buildHeader(context, theme, imagesAsync),
-          
-          const SizedBox(height: 8),
-          
-          // Gallery content
-          Expanded(
-            child: imagesAsync.when(
-              data: (images) => _buildGalleryContent(context, images),
-              loading: () => _buildLoadingState(),
-              error: (error, stack) => _buildErrorState(context, error),
-            ),
+    final imagesAsync =
+        ref.watch(activityImageNotifierProvider(widget.activityId));
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use available height or default to 160
+        final availableHeight =
+            constraints.maxHeight.isFinite ? constraints.maxHeight : 160.0;
+
+        return SizedBox(
+          height: availableHeight,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with image count
+              _buildHeader(context, theme, imagesAsync),
+
+              const SizedBox(height: 8),
+
+              // Gallery content
+              Expanded(
+                child: imagesAsync.when(
+                  data: (images) => _buildGalleryContent(context, images),
+                  loading: () => _buildLoadingState(),
+                  error: (error, stack) => _buildErrorState(context, error),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildHeader(BuildContext context, ThemeData theme, AsyncValue<List<ActivityImage>> imagesAsync) {
+  Widget _buildHeader(BuildContext context, ThemeData theme,
+      AsyncValue<List<ActivityImage>> imagesAsync) {
     final imageCount = imagesAsync.maybeWhen(
       data: (images) => images.length,
       orElse: () => 0,
     );
-    
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -89,7 +100,7 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
             ),
           ],
         ),
-        
+
         // Add button
         if (widget.showAddButton && imageCount < 5)
           _buildAddImageButton(context, theme),
@@ -138,7 +149,8 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
     );
   }
 
-  Widget _buildGalleryContent(BuildContext context, List<ActivityImage> images) {
+  Widget _buildGalleryContent(
+      BuildContext context, List<ActivityImage> images) {
     if (images.isEmpty) {
       return _buildEmptyState(context);
     }
@@ -150,7 +162,7 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
 
   Widget _buildEmptyState(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -184,7 +196,8 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
               icon: const Icon(Icons.add_photo_alternate, size: 18),
               label: const Text('Add Image'),
               style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               ),
             ),
         ],
@@ -210,13 +223,15 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
     );
   }
 
-  Widget _buildReorderableGallery(BuildContext context, List<ActivityImage> images) {
+  Widget _buildReorderableGallery(
+      BuildContext context, List<ActivityImage> images) {
     return ReorderableListView.builder(
       scrollController: _scrollController,
       scrollDirection: Axis.horizontal,
       padding: const EdgeInsets.symmetric(horizontal: 4),
       itemCount: images.length,
-      onReorder: (oldIndex, newIndex) => _reorderImages(images, oldIndex, newIndex),
+      onReorder: (oldIndex, newIndex) =>
+          _reorderImages(images, oldIndex, newIndex),
       proxyDecorator: (child, index, animation) {
         return AnimatedBuilder(
           animation: animation,
@@ -224,7 +239,7 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
             final t = Curves.easeInOut.transform(animation.value);
             final elevation = lerpDouble(0, 6, t) ?? 0;
             final scale = lerpDouble(1, 1.02, t) ?? 1;
-            
+
             return Transform.scale(
               scale: scale,
               child: Material(
@@ -280,7 +295,7 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
 
   Widget _buildErrorState(BuildContext context, Object error) {
     final theme = Theme.of(context);
-    
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -317,7 +332,8 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
           ),
           const SizedBox(height: 12),
           TextButton(
-            onPressed: () => ref.refresh(activityImageNotifierProvider(widget.activityId)),
+            onPressed: () =>
+                ref.refresh(activityImageNotifierProvider(widget.activityId)),
             child: const Text('Retry'),
           ),
         ],
@@ -357,9 +373,10 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
 
   Future<void> _addImage(ImageSource source) async {
     try {
-      final notifier = ref.read(activityImageNotifierProvider(widget.activityId).notifier);
+      final notifier =
+          ref.read(activityImageNotifierProvider(widget.activityId).notifier);
       await notifier.addImage(source);
-      
+
       // Scroll to the end to show the new image
       if (_scrollController.hasClients) {
         await Future.delayed(const Duration(milliseconds: 300));
@@ -376,14 +393,16 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
 
   Future<void> _deleteImage(String imageId) async {
     try {
-      final notifier = ref.read(activityImageNotifierProvider(widget.activityId).notifier);
+      final notifier =
+          ref.read(activityImageNotifierProvider(widget.activityId).notifier);
       await notifier.removeImage(imageId);
     } catch (error) {
       // Error is handled by the provider and shown globally
     }
   }
 
-  Future<void> _reorderImages(List<ActivityImage> images, int oldIndex, int newIndex) async {
+  Future<void> _reorderImages(
+      List<ActivityImage> images, int oldIndex, int newIndex) async {
     try {
       // Adjust newIndex if moving item down
       if (oldIndex < newIndex) {
@@ -399,7 +418,8 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
       final imageIds = reorderedImages.map((img) => img.id).toList();
 
       // Update the order
-      final notifier = ref.read(activityImageNotifierProvider(widget.activityId).notifier);
+      final notifier =
+          ref.read(activityImageNotifierProvider(widget.activityId).notifier);
       await notifier.reorderImages(imageIds);
     } catch (error) {
       // Error is handled by the provider and shown globally

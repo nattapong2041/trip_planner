@@ -107,15 +107,15 @@
     - Implement proper error display and retry options
     - _Requirements: 3.3, 4.3_
 
-- [ ] 8. Integrate image management into existing activity screens
-  - [ ] 8.1 Update ActivityDetailScreen to include image gallery
+- [x] 8. Integrate image management into existing activity screens
+  - [x] 8.1 Update ActivityDetailScreen to include image gallery
     - Add ActivityImageGallery widget to activity detail layout
     - Integrate with existing activity data loading
     - Add proper error handling and loading states
     - Ensure responsive design for different screen sizes
     - _Requirements: 1.1, 5.1, 10.1_
 
-  - [ ] 8.2 Update ActivityCard to show image preview
+  - [x] 8.2 Update ActivityCard to show image preview
     - Add small image preview to activity cards
     - Show image count indicator when images exist
     - Implement proper loading and error states

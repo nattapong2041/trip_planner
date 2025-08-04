@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/activity.dart';
 import '../../providers/activity_provider.dart';
 import '../../widgets/activity/activity_card.dart';
+import '../../widgets/activity/activity_image_gallery.dart';
 import '../../widgets/activity/reorderable_brainstorm_ideas.dart';
 import '../../utils/responsive.dart';
 import 'activity_edit_screen.dart';
@@ -130,6 +131,24 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
           ),
         ),
         
+        // Image Gallery Section - Constrained height for mobile
+        Padding(
+          padding: EdgeInsets.symmetric(horizontal: Responsive.getSpacing(context)),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxHeight: 140, // Reduced from 160 to prevent overflow
+              minHeight: 100,
+            ),
+            child: ActivityImageGallery(
+              activityId: activity.id,
+              allowReordering: true,
+              showAddButton: true,
+            ),
+          ),
+        ),
+        
+        const SizedBox(height: 16),
+        
         // Brainstorm Ideas Section
         Expanded(
           child: _buildBrainstormSection(context, activity),
@@ -141,14 +160,34 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
   Widget _buildTabletLayout(BuildContext context, Activity activity) {
     return Row(
       children: [
-        // Left side - Activity Details
+        // Left side - Activity Details and Images
         Expanded(
           flex: 1,
           child: Padding(
             padding: EdgeInsets.all(Responsive.getSpacing(context)),
-            child: ActivityCard(
-              activity: activity,
-              showActions: false,
+            child: Column(
+              children: [
+                // Activity Details Card
+                ActivityCard(
+                  activity: activity,
+                  showActions: false,
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Image Gallery
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxHeight: 160,
+                    minHeight: 120,
+                  ),
+                  child: ActivityImageGallery(
+                    activityId: activity.id,
+                    allowReordering: true,
+                    showAddButton: true,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -165,14 +204,37 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
   Widget _buildDesktopLayout(BuildContext context, Activity activity) {
     return Row(
       children: [
-        // Left side - Activity Details (fixed width)
+        // Left side - Activity Details and Images (fixed width)
         SizedBox(
           width: 400,
           child: Padding(
             padding: EdgeInsets.all(Responsive.getSpacing(context)),
-            child: ActivityCard(
-              activity: activity,
-              showActions: false,
+            child: Column(
+              children: [
+                // Activity Details Card
+                ActivityCard(
+                  activity: activity,
+                  showActions: false,
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Image Gallery
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxHeight: 160,
+                    minHeight: 120,
+                  ),
+                  child: ActivityImageGallery(
+                    activityId: activity.id,
+                    allowReordering: true,
+                    showAddButton: true,
+                  ),
+                ),
+                
+                // Spacer to push content to top
+                const Spacer(),
+              ],
             ),
           ),
         ),

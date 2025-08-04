@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/activity.dart';
 import '../../utils/responsive.dart';
 import 'activity_collaborator_info.dart';
@@ -66,6 +67,39 @@ class ActivityCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // Image count indicator
+                  if (activity.images.isNotEmpty) ...[
+                    Container(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: Responsive.getSpacing(context, baseSpacing: 8.0),
+                        vertical: Responsive.getSpacing(context, baseSpacing: 4.0),
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.secondaryContainer,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.photo_library,
+                            size: Responsive.getIconSize(context, baseSize: 14),
+                            color: Theme.of(context).colorScheme.onSecondaryContainer,
+                          ),
+                          SizedBox(width: Responsive.getSpacing(context, baseSpacing: 4.0)),
+                          Text(
+                            '${activity.images.length}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: Theme.of(context).colorScheme.onSecondaryContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
+                  ],
+                  // Brainstorm ideas indicator
                   if (activity.brainstormIdeas.isNotEmpty) ...[
                     Container(
                       padding: EdgeInsets.symmetric(
@@ -162,12 +196,128 @@ class ActivityCard extends StatelessWidget {
                 ),
               ],
               
+              // Image preview section
+              if (activity.images.isNotEmpty) ...[
+                SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
+                _buildImagePreview(context, activity),
+              ],
+              
               // Collaborator information
               if (showCollaboratorInfo) ...[
                 SizedBox(height: Responsive.getSpacing(context, baseSpacing: 8.0)),
                 ActivityCollaboratorInfo(activity: activity),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePreview(BuildContext context, Activity activity) {
+    final theme = Theme.of(context);
+    final imagesToShow = activity.images.take(3).toList(); // Show max 3 images
+    final remainingCount = activity.images.length - imagesToShow.length;
+
+    return SizedBox(
+      height: 60,
+      child: Row(
+        children: [
+          // Image previews
+          Expanded(
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: imagesToShow.length + (remainingCount > 0 ? 1 : 0),
+              separatorBuilder: (context, index) => SizedBox(
+                width: Responsive.getSpacing(context, baseSpacing: 8.0),
+              ),
+              itemBuilder: (context, index) {
+                if (index < imagesToShow.length) {
+                  // Show actual image
+                  final image = imagesToShow[index];
+                  return _buildImageThumbnail(context, image.url);
+                } else {
+                  // Show remaining count
+                  return _buildRemainingCountIndicator(context, remainingCount);
+                }
+              },
+            ),
+          ),
+          
+          // Image count text
+          SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
+          Text(
+            '${activity.images.length} image${activity.images.length == 1 ? '' : 's'}',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildImageThumbnail(BuildContext context, String imageUrl) {
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: CachedNetworkImage(
+          imageUrl: imageUrl,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            color: Colors.grey[200],
+            child: Center(
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+          ),
+          errorWidget: (context, url, error) => Container(
+            color: Colors.grey[100],
+            child: Icon(
+              Icons.broken_image,
+              color: Colors.grey[400],
+              size: 20,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRemainingCountIndicator(BuildContext context, int remainingCount) {
+    final theme = Theme.of(context);
+    
+    return Container(
+      width: 60,
+      height: 60,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        color: theme.colorScheme.surfaceContainerHighest,
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+        ),
+      ),
+      child: Center(
+        child: Text(
+          '+$remainingCount',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurface,
+            fontWeight: FontWeight.bold,
           ),
         ),
       ),
@@ -260,6 +410,38 @@ class ActivityCardCompact extends StatelessWidget {
                   ],
                 ),
               ),
+              // Image count indicator
+              if (activity.images.isNotEmpty) ...[
+                Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: Responsive.getSpacing(context, baseSpacing: 8.0),
+                    vertical: Responsive.getSpacing(context, baseSpacing: 4.0),
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondaryContainer,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.photo_library,
+                        size: Responsive.getIconSize(context, baseSize: 12),
+                        color: Theme.of(context).colorScheme.onSecondaryContainer,
+                      ),
+                      SizedBox(width: Responsive.getSpacing(context, baseSpacing: 4.0)),
+                      Text(
+                        '${activity.images.length}',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSecondaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                SizedBox(width: Responsive.getSpacing(context, baseSpacing: 8.0)),
+              ],
+              // Brainstorm ideas indicator
               if (activity.brainstormIdeas.isNotEmpty) ...[
                 Container(
                   padding: EdgeInsets.symmetric(

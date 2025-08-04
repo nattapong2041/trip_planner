@@ -1,34 +1,47 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:logger/logger.dart';
+import 'image_service_interface.dart';
 
-/// Abstract interface for image operations
-abstract class ImageService {
-  /// Pick image from gallery
-  Future<File?> pickFromGallery();
+// Export the interface
+export 'image_service_interface.dart';
 
-  /// Pick image from camera
-  Future<File?> pickFromCamera();
+/// Universal platform file implementation using XFile (works on all platforms)
+class UniversalPlatformFile implements PlatformFile {
+  final XFile _xFile;
+  final String _name;
 
-  /// Compress image if it exceeds size limit
-  Future<File> compressImage(File imageFile,
-      {int maxSizeBytes = 3 * 1024 * 1024});
+  UniversalPlatformFile(this._xFile, [String? name]) : _name = name ?? _xFile.name;
 
-  /// Get image file size
-  Future<int> getFileSize(File file);
+  @override
+  String get path => _xFile.path;
 
-  /// Generate thumbnail for image
-  Future<File> generateThumbnail(File imageFile, {int maxWidth = 300});
+  @override
+  String get name => _name;
+
+  @override
+  Future<List<int>> readAsBytes() async {
+    final bytes = await _xFile.readAsBytes();
+    return bytes.toList();
+  }
+
+  @override
+  Future<int> length() async {
+    final bytes = await _xFile.readAsBytes();
+    return bytes.length;
+  }
+
+  XFile get xFile => _xFile;
 }
 
-/// Implementation of ImageService using image_picker and flutter_image_compress
+/// Universal implementation of ImageService using XFile (works on all platforms)
 class ImageServiceImpl implements ImageService {
   final ImagePicker _picker = ImagePicker();
   final Logger _logger = Logger();
 
   @override
-  Future<File?> pickFromGallery() async {
+  Future<PlatformFile?> pickFromGallery() async {
     try {
       _logger.d('Picking image from gallery');
 
@@ -40,8 +53,8 @@ class ImageServiceImpl implements ImageService {
       );
 
       if (image != null) {
-        _logger.i('Image picked from gallery: ${image.path}');
-        return File(image.path);
+        _logger.i('Image picked from gallery: ${image.name}');
+        return UniversalPlatformFile(image);
       }
 
       _logger.d('No image selected from gallery');
@@ -53,7 +66,7 @@ class ImageServiceImpl implements ImageService {
   }
 
   @override
-  Future<File?> pickFromCamera() async {
+  Future<PlatformFile?> pickFromCamera() async {
     try {
       _logger.d('Picking image from camera');
 
@@ -65,8 +78,8 @@ class ImageServiceImpl implements ImageService {
       );
 
       if (image != null) {
-        _logger.i('Image captured from camera: ${image.path}');
-        return File(image.path);
+        _logger.i('Image captured from camera: ${image.name}');
+        return UniversalPlatformFile(image);
       }
 
       _logger.d('No image captured from camera');
@@ -78,9 +91,12 @@ class ImageServiceImpl implements ImageService {
   }
 
   @override
-  Future<File> compressImage(File imageFile,
+  Future<PlatformFile> compressImage(PlatformFile imageFile,
       {int maxSizeBytes = 3 * 1024 * 1024}) async {
     try {
+      final universalFile = imageFile as UniversalPlatformFile;
+      final xFile = universalFile.xFile;
+
       final fileSize = await getFileSize(imageFile);
 
       if (fileSize <= maxSizeBytes) {
@@ -99,20 +115,29 @@ class ImageServiceImpl implements ImageService {
         quality = 70;
       }
 
-      final compressedFile = await FlutterImageCompress.compressAndGetFile(
-        imageFile.absolute.path,
-        '${imageFile.parent.path}/compressed_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      // Use compressWithFile which works on all platforms
+      final compressedBytes = await FlutterImageCompress.compressWithFile(
+        xFile.path,
         quality: quality,
         minWidth: 800,
         minHeight: 600,
       );
 
-      if (compressedFile != null) {
-        final compressedSize = await getFileSize(File(compressedFile.path));
+      if (compressedBytes != null) {
+        // Create a new XFile from the compressed bytes
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final compressedFile = XFile.fromData(
+          Uint8List.fromList(compressedBytes),
+          name: 'compressed_$timestamp.jpg',
+          mimeType: 'image/jpeg',
+        );
+        
+        final compressedPlatformFile = UniversalPlatformFile(compressedFile);
+        final compressedSize = await getFileSize(compressedPlatformFile);
         _logger.i('Image compressed from ${fileSize}B to ${compressedSize}B');
-        return File(compressedFile.path);
+        return compressedPlatformFile;
       } else {
-        throw Exception('Image compression failed');
+        throw Exception('Image compression failed - compressed file is null');
       }
     } catch (e) {
       _logger.e('Error compressing image: $e');
@@ -121,7 +146,7 @@ class ImageServiceImpl implements ImageService {
   }
 
   @override
-  Future<int> getFileSize(File file) async {
+  Future<int> getFileSize(PlatformFile file) async {
     try {
       return await file.length();
     } catch (e) {
@@ -131,23 +156,34 @@ class ImageServiceImpl implements ImageService {
   }
 
   @override
-  Future<File> generateThumbnail(File imageFile, {int maxWidth = 300}) async {
+  Future<PlatformFile> generateThumbnail(PlatformFile imageFile, {int maxWidth = 300}) async {
     try {
-      _logger.d('Generating thumbnail for image: ${imageFile.path}');
+      final universalFile = imageFile as UniversalPlatformFile;
+      final xFile = universalFile.xFile;
 
-      final thumbnailFile = await FlutterImageCompress.compressAndGetFile(
-        imageFile.absolute.path,
-        '${imageFile.parent.path}/thumb_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      _logger.d('Generating thumbnail for image: ${xFile.name}');
+
+      // Use compressWithFile which works on all platforms
+      final thumbnailBytes = await FlutterImageCompress.compressWithFile(
+        xFile.path,
         quality: 70,
         minWidth: maxWidth,
         minHeight: (maxWidth * 0.75).round(),
       );
 
-      if (thumbnailFile != null) {
-        _logger.i('Thumbnail generated: ${thumbnailFile.path}');
-        return File(thumbnailFile.path);
+      if (thumbnailBytes != null) {
+        // Create a new XFile from the thumbnail bytes
+        final timestamp = DateTime.now().millisecondsSinceEpoch;
+        final thumbnailFile = XFile.fromData(
+          Uint8List.fromList(thumbnailBytes),
+          name: 'thumb_$timestamp.jpg',
+          mimeType: 'image/jpeg',
+        );
+        
+        _logger.i('Thumbnail generated: ${thumbnailFile.name}');
+        return UniversalPlatformFile(thumbnailFile);
       } else {
-        throw Exception('Thumbnail generation failed');
+        throw Exception('Thumbnail generation failed - thumbnail file is null');
       }
     } catch (e) {
       _logger.e('Error generating thumbnail: $e');
@@ -155,3 +191,6 @@ class ImageServiceImpl implements ImageService {
     }
   }
 }
+
+/// Factory function to create the ImageService implementation
+ImageService createImageService() => ImageServiceImpl();

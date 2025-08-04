@@ -1,8 +1,6 @@
-import 'dart:io';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
-import 'package:path/path.dart' as path;
 import '../models/activity_image.dart';
 import '../models/app_error.dart';
 import '../services/image_service.dart';
@@ -15,7 +13,7 @@ part 'activity_image_provider.g.dart';
 /// Provider for the ImageService instance
 @riverpod
 ImageService imageService(Ref ref) {
-  return ImageServiceImpl();
+  return createImageService();
 }
 
 /// Provider for the ImageStorageService instance
@@ -53,7 +51,7 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
       final activityRepository = ref.read(activityRepositoryProvider);
 
       // Pick image
-      File? imageFile;
+      PlatformFile? imageFile;
       if (source == ImageSource.gallery) {
         imageFile = await imageService.pickFromGallery();
       } else {
@@ -93,7 +91,7 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
         storagePath: storagePath,
         uploadedBy: user.id,
         uploadedAt: DateTime.now(),
-        originalFileName: path.basename(imageFile.path),
+        originalFileName: imageFile.name,
         fileSizeBytes: fileSize,
       );
 
@@ -105,14 +103,8 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
           .read(successNotifierProvider.notifier)
           .showSuccessWithAutoClear('Image added successfully!');
 
-      // Clean up temporary files
-      try {
-        if (compressedFile.path != imageFile.path) {
-          await compressedFile.delete();
-        }
-      } catch (e) {
-        // Ignore cleanup errors
-      }
+      // Note: Cleanup is handled automatically by the platform
+      // No manual cleanup needed for PlatformFile
 
       // Refresh the state
       ref.invalidateSelf();

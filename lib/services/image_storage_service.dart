@@ -1,11 +1,12 @@
-import 'dart:io';
+import 'dart:typed_data';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:logger/logger.dart';
+import 'image_service.dart';
 
 /// Abstract interface for image storage operations
 abstract class ImageStorageService {
   /// Upload image to storage
-  Future<String> uploadImage(File imageFile, String storagePath, {
+  Future<String> uploadImage(PlatformFile imageFile, String storagePath, {
     Function(double)? onProgress,
   });
   
@@ -22,18 +23,25 @@ class FirebaseImageStorageService implements ImageStorageService {
   final Logger _logger = Logger();
   
   @override
-  Future<String> uploadImage(File imageFile, String storagePath, {
+  Future<String> uploadImage(PlatformFile imageFile, String storagePath, {
     Function(double)? onProgress,
   }) async {
     try {
       _logger.d('Uploading image to: $storagePath');
       
-      if (!await imageFile.exists()) {
-        throw Exception('Image file does not exist: ${imageFile.path}');
-      }
-      
       final ref = _storage.ref().child(storagePath);
-      final uploadTask = ref.putFile(imageFile);
+      
+      // Get image bytes
+      final imageBytes = await imageFile.readAsBytes();
+      final uploadTask = ref.putData(
+        Uint8List.fromList(imageBytes),
+        SettableMetadata(
+          contentType: 'image/jpeg',
+          customMetadata: {
+            'originalName': imageFile.name,
+          },
+        ),
+      );
       
       // Listen to upload progress
       if (onProgress != null) {

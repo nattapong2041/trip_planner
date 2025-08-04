@@ -21,26 +21,25 @@ final logger = Logger(
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   try {
     // Initialize Firebase
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
     logger.i('Firebase initialized successfully');
-    
+
     // Enable Firestore offline persistence
     await FirestoreConfig.enableOfflinePersistence();
-    
+
     // Configure Firebase Storage
     await FirebaseStorageConfig.configure();
-    
   } catch (e) {
     logger.e('Failed to initialize Firebase: $e');
     // In a real app, you might want to handle this more gracefully
     // For now, we'll continue with the app initialization
   }
-  
+
   runApp(
     const ProviderScope(
       child: TripPlannerApp(),

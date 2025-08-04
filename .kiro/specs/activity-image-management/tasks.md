@@ -1,6 +1,6 @@
 # Implementation Plan
 
-- [ ] 1. Setup dependencies and project configuration
+- [x] 1. Setup dependencies and project configuration
   - Add required dependencies to pubspec.yaml (firebase_storage, image_picker, flutter_image_compress)
   - Configure Firebase Storage in the project
   - Update build configurations for camera and photo library permissions

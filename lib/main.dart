@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:logger/logger.dart';
 import 'package:trip_planner/firebase_options.dart';
 import 'package:trip_planner/config/firestore_config.dart';
+import 'package:trip_planner/config/firebase_storage_config.dart';
 import 'screens/app.dart';
 
 // Global logger instance
@@ -30,6 +31,9 @@ void main() async {
     
     // Enable Firestore offline persistence
     await FirestoreConfig.enableOfflinePersistence();
+    
+    // Configure Firebase Storage
+    await FirebaseStorageConfig.configure();
     
   } catch (e) {
     logger.e('Failed to initialize Firebase: $e');

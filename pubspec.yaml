@@ -22,6 +22,7 @@ dependencies:
   firebase_core: ^3.15.2
   firebase_auth: ^5.7.0
   cloud_firestore: ^5.6.12
+  firebase_storage: ^12.3.8
   google_sign_in: ^7.1.1
   sign_in_with_apple: ^7.0.1
   
@@ -30,6 +31,10 @@ dependencies:
   cached_network_image: ^3.3.0
   intl: ^0.18.1
   uuid: ^4.0.0
+  
+  # Image Management
+  image_picker: ^1.0.7
+  flutter_image_compress: ^2.1.0
   
   # Utils
   freezed_annotation: ^3.0.0 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:trip_planner/config/firestore_config.dart';
+import 'package:trip_planner/config/firebase_storage_config.dart';
+import 'package:trip_planner/services/firebase_service.dart';
 import 'package:trip_planner/utils/network_test_utils.dart';
 import 'package:trip_planner/providers/trip_provider.dart';
 import 'package:trip_planner/providers/auth_provider.dart';
@@ -47,9 +49,9 @@ class _OfflineTestScreenState extends ConsumerState<OfflineTestScreen> {
       _addTestResult('\n✅ Test 2: Testing network control');
       await FirestoreConfig.disableNetwork();
       _addTestResult('   Network disabled successfully');
-      
+
       await Future.delayed(const Duration(seconds: 1));
-      
+
       await FirestoreConfig.enableNetwork();
       _addTestResult('   Network re-enabled successfully');
 
@@ -63,7 +65,8 @@ class _OfflineTestScreenState extends ConsumerState<OfflineTestScreen> {
       // Test 4: Test real-time streams with user trips (if authenticated)
       final user = ref.read(authNotifierProvider).value;
       if (user != null) {
-        _addTestResult('\n✅ Test 4: Testing real-time streams with offline support');
+        _addTestResult(
+            '\n✅ Test 4: Testing real-time streams with offline support');
         // Note: In a real implementation, we would access the underlying stream
         // For now, we'll just verify the provider is accessible
         final tripsAsync = ref.read(tripListNotifierProvider);
@@ -73,10 +76,59 @@ class _OfflineTestScreenState extends ConsumerState<OfflineTestScreen> {
         _addTestResult('\n⚠️  Test 4: Skipped (user not authenticated)');
       }
 
-      _addTestResult('\n🎉 All offline persistence tests completed successfully!');
-
+      _addTestResult(
+          '\n🎉 All offline persistence tests completed successfully!');
     } catch (e) {
       _addTestResult('\n❌ Test failed: $e');
+    } finally {
+      setState(() {
+        _isRunningTests = false;
+      });
+    }
+  }
+
+  Future<void> _testFirebaseServices() async {
+    setState(() {
+      _isRunningTests = true;
+    });
+
+    _addTestResult('\n🔥 Starting Firebase Services Tests...\n');
+
+    try {
+      // Test all Firebase connections
+      _addTestResult('✅ Testing all Firebase connections...');
+      final results = await FirebaseService.testAllConnections();
+
+      _addTestResult(
+          '   Firebase Auth: ${results['auth'] == true ? '✅' : '❌'}');
+      _addTestResult(
+          '   Firebase Firestore: ${results['firestore'] == true ? '✅' : '❌'}');
+      _addTestResult(
+          '   Firebase Storage: ${results['storage'] == true ? '✅' : '❌'}');
+
+      final allPassed = results.values.every((result) => result);
+      if (allPassed) {
+        _addTestResult('\n🎉 All Firebase services are working correctly!');
+      } else {
+        _addTestResult(
+            '\n⚠️  Some Firebase services may have issues. Check logs for details.');
+      }
+
+      // Test Firebase Storage configuration
+      _addTestResult('\n✅ Testing Firebase Storage configuration...');
+      _addTestResult(
+          '   Storage configured: ${FirebaseStorageConfig.isConfigured}');
+
+      // Test storage references
+      final activityRef =
+          FirebaseStorageConfig.getActivityImagesRef('test-activity');
+      _addTestResult('   Activity images reference: ${activityRef.fullPath}');
+
+      final imageRef =
+          FirebaseStorageConfig.getImageRef('test-activity', 'test-image.jpg');
+      _addTestResult('   Image reference: ${imageRef.fullPath}');
+    } catch (e) {
+      _addTestResult('\n❌ Firebase services test failed: $e');
     } finally {
       setState(() {
         _isRunningTests = false;
@@ -106,7 +158,7 @@ class _OfflineTestScreenState extends ConsumerState<OfflineTestScreen> {
       // Test 2: Test real-time trip updates
       _addTestResult('\n✅ Test 2: Testing real-time trip updates');
       final tripsAsync = ref.read(tripListNotifierProvider);
-      
+
       // Check if we have trip data
       if (tripsAsync.hasValue) {
         final trips = tripsAsync.value!;
@@ -119,7 +171,6 @@ class _OfflineTestScreenState extends ConsumerState<OfflineTestScreen> {
       }
 
       _addTestResult('\n🎉 Collaborative features tests completed!');
-
     } catch (e) {
       _addTestResult('\n❌ Collaborative test failed: $e');
     } finally {
@@ -152,21 +203,41 @@ class _OfflineTestScreenState extends ConsumerState<OfflineTestScreen> {
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                     const SizedBox(height: 8),
-                    Text('Configured: ${FirestoreConfig.isConfigured}'),
+                    Text(
+                        'Firestore Configured: ${FirestoreConfig.isConfigured}'),
+                    Text(
+                        'Storage Configured: ${FirebaseStorageConfig.isConfigured}'),
                     const SizedBox(height: 16),
-                    Row(
+                    Column(
                       children: [
-                        Expanded(
-                          child: ElevatedButton(
-                            onPressed: _isRunningTests ? null : _testOfflinePersistence,
-                            child: const Text('Test Offline Persistence'),
-                          ),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _isRunningTests
+                                    ? null
+                                    : _testOfflinePersistence,
+                                child: const Text('Test Offline Persistence'),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: _isRunningTests
+                                    ? null
+                                    : _testCollaborativeFeatures,
+                                child: const Text('Test Collaboration'),
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 8),
-                        Expanded(
+                        const SizedBox(height: 8),
+                        SizedBox(
+                          width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: _isRunningTests ? null : _testCollaborativeFeatures,
-                            child: const Text('Test Collaboration'),
+                            onPressed:
+                                _isRunningTests ? null : _testFirebaseServices,
+                            child: const Text('Test Firebase Services'),
                           ),
                         ),
                       ],
@@ -202,15 +273,22 @@ class _OfflineTestScreenState extends ConsumerState<OfflineTestScreen> {
                           width: double.infinity,
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                            color: Theme.of(context)
+                                .colorScheme
+                                .surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: SingleChildScrollView(
                             child: Text(
-                              _testResults.isEmpty ? 'No tests run yet.' : _testResults,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                fontFamily: 'monospace',
-                              ),
+                              _testResults.isEmpty
+                                  ? 'No tests run yet.'
+                                  : _testResults,
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(
+                                    fontFamily: 'monospace',
+                                  ),
                             ),
                           ),
                         ),

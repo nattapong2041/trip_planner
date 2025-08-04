@@ -102,17 +102,17 @@ The Activity Image Management feature extends the existing Trip Planner applicat
 4. WHEN multiple images are from the same user THEN the system SHALL group them visually
 5. WHEN displaying timestamps THEN the system SHALL use relative time format (e.g., "2 hours ago", "yesterday")
 
-### Requirement 9: Offline Behavior and Network Handling
+### Requirement 9: Simple Error Handling and Image Caching
 
-**User Story:** As a user, I want clear feedback when network issues affect image uploads, so that I can understand what happened and retry if needed.
+**User Story:** As a user, I want simple error handling for failed uploads and cached image display, so that the app works smoothly without complex offline features.
 
 #### Acceptance Criteria
 
-1. WHEN a user attempts to upload an image while offline THEN the system SHALL display an error message indicating no network connection
-2. WHEN an image upload fails due to network issues THEN the system SHALL show an error message and allow manual retry
-3. WHEN viewing images offline THEN the system SHALL display cached images using cached_network_image
-4. WHEN a user refreshes the activity screen THEN the system SHALL show the current state of uploaded images from the server
-5. WHEN images fail to load due to network issues THEN the system SHALL show a retry option for individual images
+1. WHEN an image upload fails THEN the system SHALL display an error message and allow manual retry
+2. WHEN viewing images THEN the system SHALL use cached_network_image for automatic caching and loading states
+3. WHEN an image fails to load THEN the system SHALL show a placeholder with retry option
+4. WHEN a user retries a failed upload THEN the system SHALL attempt the upload again
+5. WHEN images are loading THEN the system SHALL show appropriate loading indicators
 
 ### Requirement 10: Performance and User Experience
 

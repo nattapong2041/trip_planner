@@ -122,105 +122,33 @@
     - Maintain existing card layout and functionality
     - _Requirements: 5.1, 10.2_
 
-- [ ] 9. Implement network error handling and image caching
-  - [ ] 9.1 Add network-aware error handling
-    - Implement network connectivity checks before upload attempts
-    - Add clear error messages for offline upload attempts
-    - Create manual retry functionality for failed uploads
-    - Add refresh functionality to reload images from server
-    - _Requirements: 9.1, 9.2, 9.4_
+- [ ] 9. Finalize basic image functionality
+  - [ ] 9.1 Ensure image compression works for files >3MB
+    - Verify compression logic in ImageService compresses images over 3MB
+    - Test that compressed images maintain good quality
+    - _Requirements: 3.1, 3.2_
 
-  - [ ] 9.2 Configure cached_network_image for image display
-    - Use cached_network_image for all image displays
-    - Configure appropriate cache duration and size limits
-    - Add loading placeholders and error widgets
-    - Implement retry functionality for failed image loads
-    - _Requirements: 9.3, 9.5_
+  - [ ] 9.2 Add retry functionality for failed uploads
+    - Show error message when upload fails
+    - Add retry button to attempt upload again
+    - Handle retry logic in ActivityImageNotifier
+    - _Requirements: 9.1, 9.4_
 
-- [ ] 10. Add collaborative features and real-time updates
-  - [ ] 10.1 Implement real-time image updates
-    - Ensure Firestore listeners update image gallery in real-time
-    - Add proper handling for concurrent image additions
-    - Implement conflict resolution for simultaneous uploads
-    - _Requirements: 7.1, 7.4_
+  - [ ] 9.3 Use cached_network_image for all image displays
+    - Replace any basic Image.network with CachedNetworkImage
+    - Add basic loading and error placeholders
+    - _Requirements: 9.2, 9.3_
 
-  - [ ] 10.2 Add image attribution display
-    - Show uploader information on each image
-    - Display relative timestamps for image uploads
-    - Add user avatars and names in image metadata
-    - Group images by contributor when appropriate
-    - _Requirements: 8.1, 8.2, 8.3, 8.4_
-
-- [ ] 11. Implement error handling and validation
-  - [ ] 11.1 Add comprehensive image validation
-    - Validate file types (JPEG, PNG, WebP only)
-    - Check file size limits before and after compression
-    - Validate image dimensions and quality
-    - Add user-friendly error messages for all validation failures
-    - _Requirements: 2.3, 3.4_
-
-  - [ ] 11.2 Add network and storage error handling
-    - Handle Firebase Storage upload failures with retry logic
-    - Add proper error messages for network connectivity issues
-    - Implement graceful degradation when storage is unavailable
-    - Add error recovery mechanisms for partial uploads
-    - _Requirements: 4.5, 9.4_
-
-- [ ] 12. Add performance optimizations
-  - [ ] 12.1 Implement image compression and optimization
-    - Add automatic compression for images over 3MB
-    - Implement progressive image loading for better UX
-    - Generate and cache thumbnails for gallery view
-    - Add lazy loading for images not currently visible
-    - _Requirements: 3.1, 3.2, 10.3, 10.4_
-
-  - [ ] 12.2 Optimize memory usage and caching
-    - Configure image cache limits and cleanup policies
-    - Implement efficient image disposal when not needed
-    - Add memory pressure handling for low-memory devices
-    - Optimize image loading and rendering performance
-    - _Requirements: 10.1, 10.3_
-
-- [ ] 13. Write comprehensive tests
-  - [ ] 13.1 Create unit tests for image services
-    - Test image compression functionality with various file sizes
-    - Test Firebase Storage upload and download operations
-    - Test image validation and error handling
-    - Test network error handling and retry logic
-    - _Requirements: 3.1, 4.1, 9.1_
-
-  - [ ] 13.2 Create integration tests for image workflows
-    - Test complete image upload workflow from picker to storage
-    - Test image deletion with proper cleanup
-    - Test collaborative image viewing and real-time updates
-    - Test network error scenarios and manual retry functionality
-    - _Requirements: 1.4, 6.3, 7.1, 9.2_
-
-- [ ] 14. Update Firebase configuration and security rules
-  - [ ] 14.1 Configure Firebase Storage security rules
+- [ ] 10. Configure Firebase security rules
+  - [ ] 10.1 Configure Firebase Storage security rules
     - Add rules for activity image access control
     - Implement user authentication and authorization checks
     - Add file type and size validation in storage rules
     - Configure proper read/write permissions for collaborators
     - _Requirements: 4.1, 7.3_
 
-  - [ ] 14.2 Update Firestore security rules for image metadata
+  - [ ] 10.2 Update Firestore security rules for image metadata
     - Add rules for activity image array updates
     - Ensure proper validation of image metadata fields
     - Add collaborative access controls for image management
     - _Requirements: 7.2, 8.4_
-
-- [ ] 15. Final integration and testing
-  - [ ] 15.1 Integration testing with existing features
-    - Test image functionality with activity drag-and-drop
-    - Verify image persistence during activity updates
-    - Test image display in trip overview and day planning
-    - Ensure proper cleanup when activities are deleted
-    - _Requirements: 1.5, 6.4_
-
-  - [ ] 15.2 Performance testing and optimization
-    - Test app performance with multiple images per activity
-    - Verify memory usage stays within acceptable limits
-    - Test upload/download speeds with various network conditions
-    - Optimize any performance bottlenecks discovered
-    - _Requirements: 10.1, 10.3, 10.5_

@@ -122,19 +122,19 @@
     - Maintain existing card layout and functionality
     - _Requirements: 5.1, 10.2_
 
-- [ ] 9. Finalize basic image functionality
-  - [ ] 9.1 Ensure image compression works for files >3MB
+- [x] 9. Finalize basic image functionality
+  - [x] 9.1 Ensure image compression works for files >3MB
     - Verify compression logic in ImageService compresses images over 3MB
     - Test that compressed images maintain good quality
     - _Requirements: 3.1, 3.2_
 
-  - [ ] 9.2 Add retry functionality for failed uploads
+  - [x] 9.2 Add retry functionality for failed uploads
     - Show error message when upload fails
     - Add retry button to attempt upload again
     - Handle retry logic in ActivityImageNotifier
     - _Requirements: 9.1, 9.4_
 
-  - [ ] 9.3 Use cached_network_image for all image displays
+  - [x] 9.3 Use cached_network_image for all image displays
     - Replace any basic Image.network with CachedNetworkImage
     - Add basic loading and error placeholders
     - _Requirements: 9.2, 9.3_

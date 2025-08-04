@@ -37,7 +37,33 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
   }
 
   /// Add image to activity with compression and upload
-  Future<void> addImage(ImageSource source) async {
+  Future<void> addImage(ImageSource source, {int maxRetries = 3}) async {
+    int retryCount = 0;
+
+    while (retryCount <= maxRetries) {
+      try {
+        await _performImageUpload(source, retryCount);
+        return; // Success - exit retry loop
+      } catch (error) {
+        retryCount++;
+
+        if (retryCount > maxRetries) {
+          // Max retries reached, throw the error
+          rethrow;
+        }
+
+        // Wait before retrying (exponential backoff)
+        await Future.delayed(Duration(seconds: retryCount * 2));
+
+        // Update loading message to show retry attempt
+        ref.read(loadingNotifierProvider.notifier).showLoading();
+      }
+    }
+  }
+
+  /// Perform the actual image upload process
+  Future<void> _performImageUpload(
+      ImageSource source, int attemptNumber) async {
     try {
       state = const AsyncValue.loading();
 
@@ -50,37 +76,67 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
       final storageService = ref.read(imageStorageServiceProvider);
       final activityRepository = ref.read(activityRepositoryProvider);
 
-      // Pick image
+      // Pick image (only on first attempt)
       PlatformFile? imageFile;
-      if (source == ImageSource.gallery) {
-        imageFile = await imageService.pickFromGallery();
+      if (attemptNumber == 0) {
+        if (source == ImageSource.gallery) {
+          imageFile = await imageService.pickFromGallery();
+        } else {
+          imageFile = await imageService.pickFromCamera();
+        }
+
+        if (imageFile == null) {
+          // User cancelled, restore previous state
+          ref.invalidateSelf();
+          return;
+        }
+
+        // Store the picked file for potential retries
+        _lastPickedFile = imageFile;
       } else {
-        imageFile = await imageService.pickFromCamera();
+        // Use the previously picked file for retries
+        imageFile = _lastPickedFile;
+        if (imageFile == null) {
+          throw Exception('No image file available for retry');
+        }
       }
 
-      if (imageFile == null) {
-        // User cancelled, restore previous state
-        ref.invalidateSelf();
-        return;
+      // Show compression progress (only on first attempt)
+      if (attemptNumber == 0) {
+        ref.read(loadingNotifierProvider.notifier).showLoading();
       }
 
-      // Show compression progress
-      ref.read(loadingNotifierProvider.notifier).showLoading();
+      // Compress image if needed (only on first attempt)
+      PlatformFile compressedFile;
+      if (attemptNumber == 0) {
+        compressedFile = await imageService.compressImage(imageFile);
+        _lastCompressedFile = compressedFile;
+      } else {
+        compressedFile = _lastCompressedFile ?? imageFile;
+      }
 
-      // Compress image if needed
-      final compressedFile = await imageService.compressImage(imageFile);
       final fileSize = await imageService.getFileSize(compressedFile);
 
-      // Generate storage path
-      final fileName = '${const Uuid().v4()}.jpg';
-      final storagePath = 'activities/$activityId/images/$fileName';
+      // Generate storage path (only on first attempt)
+      String storagePath;
+      if (attemptNumber == 0) {
+        final fileName = '${const Uuid().v4()}.jpg';
+        storagePath = 'activities/$activityId/images/$fileName';
+        _lastStoragePath = storagePath;
+      } else {
+        storagePath = _lastStoragePath ??
+            'activities/$activityId/images/${const Uuid().v4()}.jpg';
+      }
+
+      // Update loading message for upload
+      ref.read(loadingNotifierProvider.notifier).showLoading();
 
       // Upload to Firebase Storage with progress tracking
       final downloadUrl = await storageService.uploadImage(
         compressedFile,
         storagePath,
         onProgress: (progress) {
-          // Progress is handled by the storage service
+          // Progress tracking (loading state is already shown)
         },
       );
 
@@ -103,16 +159,54 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
           .read(successNotifierProvider.notifier)
           .showSuccessWithAutoClear('Image added successfully!');
 
-      // Note: Cleanup is handled automatically by the platform
-      // No manual cleanup needed for PlatformFile
+      // Clear cached files after successful upload
+      _clearCachedFiles();
 
       // Refresh the state
       ref.invalidateSelf();
     } catch (error) {
       ref.read(loadingNotifierProvider.notifier).hideLoading();
+
+      // Don't show error immediately if we're going to retry
+      if (attemptNumber < 3) {
+        // Just rethrow to trigger retry
+        rethrow;
+      }
+
+      // Final attempt failed, show error
       final appError = _handleImageError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
       state = AsyncValue.error(error, StackTrace.current);
+
+      // Clear cached files after final failure
+      _clearCachedFiles();
+
+      rethrow;
+    }
+  }
+
+  // Cache variables for retry functionality
+  PlatformFile? _lastPickedFile;
+  PlatformFile? _lastCompressedFile;
+  String? _lastStoragePath;
+
+  /// Clear cached files used for retries
+  void _clearCachedFiles() {
+    _lastPickedFile = null;
+    _lastCompressedFile = null;
+    _lastStoragePath = null;
+  }
+
+  /// Retry the last failed upload with the same image
+  Future<void> retryLastUpload(ImageSource source) async {
+    if (_lastPickedFile == null) {
+      throw Exception('No previous upload to retry');
+    }
+
+    try {
+      await _performImageUpload(source, 1); // Start from attempt 1 (retry)
+    } catch (error) {
+      // Error handling is done in _performImageUpload
       rethrow;
     }
   }
@@ -194,12 +288,16 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
       return const AppError.validation(
           'Maximum of 5 images allowed per activity.');
     } else if (errorMessage.contains('network') ||
-        errorMessage.contains('Network error')) {
-      return const AppError.network(
-          'Network error while managing images. Please check your connection.');
+        errorMessage.contains('Network error') ||
+        errorMessage.contains('SocketException') ||
+        errorMessage.contains('TimeoutException')) {
+      return AppError.network(
+          'Upload failed due to network issues. The upload was automatically retried but still failed. Please check your connection and try again.');
     } else if (errorMessage.contains('storage') ||
-        errorMessage.contains('Storage error')) {
-      return const AppError.unknown('Storage error. Please try again.');
+        errorMessage.contains('Storage error') ||
+        errorMessage.contains('firebase_storage')) {
+      return const AppError.unknown(
+          'Storage error occurred during upload. The upload was automatically retried but still failed. Please try again.');
     } else if (errorMessage.contains('permission') ||
         errorMessage.contains('Unauthorized')) {
       return const AppError.permission(
@@ -215,11 +313,11 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
       return const AppError.unknown(
           'Failed to optimize image. Please try a different image.');
     } else if (errorMessage.contains('upload failed')) {
-      return const AppError.network(
-          'Failed to upload image. Please check your connection and try again.');
+      return AppError.network(
+          'Upload failed after multiple attempts. Please check your connection and try again.');
     } else {
-      return const AppError.unknown(
-          'An error occurred while managing images. Please try again.');
+      return AppError.unknown(
+          'Upload failed after multiple attempts. Please try again.');
     }
   }
 }

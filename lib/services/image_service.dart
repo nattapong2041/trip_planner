@@ -110,10 +110,12 @@ class ImageServiceImpl implements ImageService {
       // Calculate compression quality based on file size
       int quality = 85;
       if (fileSize > maxSizeBytes * 2) {
-        quality = 60;
+        quality = 60; // More aggressive compression for very large files
       } else if (fileSize > maxSizeBytes * 1.5) {
-        quality = 70;
+        quality = 70; // Moderate compression for large files
       }
+
+      _logger.d('Using compression quality: $quality');
 
       // Use compressWithFile which works on all platforms
       final compressedBytes = await FlutterImageCompress.compressWithFile(
@@ -134,7 +136,13 @@ class ImageServiceImpl implements ImageService {
         
         final compressedPlatformFile = UniversalPlatformFile(compressedFile);
         final compressedSize = await getFileSize(compressedPlatformFile);
-        _logger.i('Image compressed from ${fileSize}B to ${compressedSize}B');
+        
+        // Verify compression was effective
+        if (compressedSize >= fileSize) {
+          _logger.w('Compression did not reduce file size significantly. Original: ${fileSize}B, Compressed: ${compressedSize}B');
+        }
+        
+        _logger.i('Image compressed from ${fileSize}B to ${compressedSize}B (${((1 - compressedSize / fileSize) * 100).toStringAsFixed(1)}% reduction)');
         return compressedPlatformFile;
       } else {
         throw Exception('Image compression failed - compressed file is null');

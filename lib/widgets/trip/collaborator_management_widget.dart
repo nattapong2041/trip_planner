@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/user.dart';
 import '../../models/trip.dart';
 import '../../providers/trip_provider.dart';
@@ -171,7 +172,9 @@ class _CollaboratorManagementWidgetState extends ConsumerState<CollaboratorManag
         
         return ListTile(
           leading: CircleAvatar(
-            backgroundImage: user.photoUrl != null ? NetworkImage(user.photoUrl!) : null,
+            backgroundImage: user.photoUrl != null 
+                ? CachedNetworkImageProvider(user.photoUrl!) 
+                : null,
             child: user.photoUrl == null ? Text(user.displayName[0].toUpperCase()) : null,
           ),
           title: Text(user.displayName),

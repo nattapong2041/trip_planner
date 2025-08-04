@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/activity.dart';
 import '../../models/user.dart';
 import '../../providers/trip_provider.dart';
@@ -163,7 +164,9 @@ class BrainstormIdeaWithCreator extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 12,
-                  backgroundImage: creator.photoUrl != null ? NetworkImage(creator.photoUrl!) : null,
+                  backgroundImage: creator.photoUrl != null 
+                      ? CachedNetworkImageProvider(creator.photoUrl!) 
+                      : null,
                   child: creator.photoUrl == null 
                       ? Text(
                           creator.displayName[0].toUpperCase(),

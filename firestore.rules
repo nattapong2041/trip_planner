@@ -46,11 +46,31 @@ service cloud.firestore {
              request.resource.data.place.size() <= 200 &&
              request.resource.data.activityType is string &&
              request.resource.data.activityType.size() > 0 &&
-             request.resource.data.activityType.size() <= 100
+             request.resource.data.activityType.size() <= 100 &&
+             hasValidImageData()
     }
     
     function canAccessTrip(tripData) {
       return isOwner(tripData.ownerId) || isCollaborator(tripData.collaboratorIds);
+    }
+    
+    // Image validation functions - simplified for Firestore rules compatibility
+    function hasValidImageData() {
+      // Basic validation that images field is an array with reasonable size limit
+      return !('images' in request.resource.data.keys()) ||
+             (request.resource.data.images is list && 
+              request.resource.data.images.size() <= 5);
+    }
+    
+
+    
+    function canModifyImages() {
+      // If images field is being modified, validate the changes
+      return !('images' in request.resource.data.keys()) ||
+             // Activity creator can modify any images
+             isOwner(resource.data.createdBy) ||
+             // For non-creators, basic validation that images array is present and reasonable
+             (request.resource.data.images is list && request.resource.data.images.size() <= 5);
     }
     
     // Users collection - allow reading for collaboration features
@@ -103,7 +123,10 @@ service cloud.firestore {
         canAccessTrip(get(/databases/$(database)/documents/trips/$(resource.data.tripId)).data) &&
         // Ensure critical fields are not changed inappropriately
         (request.resource.data.tripId == resource.data.tripId || !('tripId' in request.resource.data.keys())) &&
-        (request.resource.data.id == resource.data.id || !('id' in request.resource.data.keys()));
+        (request.resource.data.id == resource.data.id || !('id' in request.resource.data.keys())) &&
+        // Validate images array and permissions
+        hasValidImageData() &&
+        canModifyImages();
       
       // Delete access for activity creator or trip owner
       allow delete: if isAuthenticated() && 

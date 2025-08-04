@@ -1,0 +1,59 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Helper functions for authentication and authorization
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isValidImageFile() {
+      return request.resource.contentType.matches('image/.*');
+    }
+    
+    function isWithinSizeLimit() {
+      return request.resource.size < 10 * 1024 * 1024; // 10MB limit
+    }
+    
+    function hasAccessToTrip(activityId) {
+      // Get the activity document to find the associated trip
+      let activityDoc = firestore.get(/databases/(default)/documents/activities/$(activityId));
+      let tripId = activityDoc.data.tripId;
+      
+      // Get the trip document to check permissions
+      let tripDoc = firestore.get(/databases/(default)/documents/trips/$(tripId));
+      let tripData = tripDoc.data;
+      
+      // Check if user is owner or collaborator
+      return request.auth.uid == tripData.ownerId || 
+             request.auth.uid in tripData.collaboratorIds;
+    }
+    
+    function isActivityOwner(activityId) {
+      // Get the activity document to check ownership
+      let activityDoc = firestore.get(/databases/(default)/documents/activities/$(activityId));
+      return request.auth.uid == activityDoc.data.createdBy;
+    }
+    
+    
+    // Activity images storage path: /activities/{activityId}/images/{imageId}
+    match /activities/{activityId}/images/{imageId} {
+      // Read access: Users who have access to the trip containing this activity
+      allow read: if isAuthenticated() && hasAccessToTrip(activityId);
+      
+      // Write access: Users who have access to the trip, with file validation
+      allow write: if isAuthenticated() && 
+                   hasAccessToTrip(activityId) && 
+                   isValidImageFile() && 
+                   isWithinSizeLimit();
+      
+      // Delete access: Activity owner or the user who uploaded the image
+      allow delete: if isAuthenticated() && 
+                    (isActivityOwner(activityId));
+    }
+    
+    // Fallback rule - deny all other access
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

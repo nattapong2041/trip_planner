@@ -140,6 +140,7 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
               minHeight: 100,
             ),
             child: ActivityImageGallery(
+              key: ValueKey('gallery_${activity.id}_${activity.images.length}'),
               activityId: activity.id,
               allowReordering: true,
               showAddButton: true,
@@ -182,6 +183,7 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
                     minHeight: 120,
                   ),
                   child: ActivityImageGallery(
+                    key: ValueKey('gallery_tablet_${activity.id}_${activity.images.length}'),
                     activityId: activity.id,
                     allowReordering: true,
                     showAddButton: true,
@@ -226,6 +228,7 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
                     minHeight: 120,
                   ),
                   child: ActivityImageGallery(
+                    key: ValueKey('gallery_desktop_${activity.id}_${activity.images.length}'),
                     activityId: activity.id,
                     allowReordering: true,
                     showAddButton: true,

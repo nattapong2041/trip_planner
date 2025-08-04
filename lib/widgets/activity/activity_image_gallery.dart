@@ -377,9 +377,14 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
           ref.read(activityImageNotifierProvider(widget.activityId).notifier);
       await notifier.addImage(source);
 
+      // Force a rebuild to ensure the new image is displayed
+      if (mounted) {
+        setState(() {});
+      }
+
       // Scroll to the end to show the new image
       if (_scrollController.hasClients) {
-        await Future.delayed(const Duration(milliseconds: 300));
+        await Future.delayed(const Duration(milliseconds: 500));
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
           duration: const Duration(milliseconds: 300),
@@ -396,6 +401,11 @@ class _ActivityImageGalleryState extends ConsumerState<ActivityImageGallery> {
       final notifier =
           ref.read(activityImageNotifierProvider(widget.activityId).notifier);
       await notifier.removeImage(imageId);
+
+      // Force a rebuild to ensure the UI updates
+      if (mounted) {
+        setState(() {});
+      }
     } catch (error) {
       // Error is handled by the provider and shown globally
     }

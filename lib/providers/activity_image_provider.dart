@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:uuid/uuid.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../models/activity_image.dart';
 import '../models/app_error.dart';
 import '../services/image_service.dart';
@@ -27,6 +28,7 @@ ImageStorageService imageStorageService(Ref ref) {
 class ActivityImageNotifier extends _$ActivityImageNotifier {
   @override
   AsyncValue<List<ActivityImage>> build(String activityId) {
+    // Watch the activity detail to get the current images
     final activityDetail =
         ref.watch(activityDetailNotifierProvider(activityId));
     return activityDetail.when(
@@ -34,6 +36,16 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
       loading: () => const AsyncValue.loading(),
       error: (error, stack) => AsyncValue.error(error, stack),
     );
+  }
+
+  /// Force refresh the images by refreshing the activity detail
+  Future<void> refreshImages() async {
+    // Invalidate the activity detail provider to force a refresh
+    ref.invalidate(activityDetailNotifierProvider(activityId));
+    
+    // Wait for the invalidation to propagate and then refresh this provider
+    await Future.delayed(const Duration(milliseconds: 200));
+    ref.invalidateSelf();
   }
 
   /// Add image to activity with compression and upload
@@ -162,8 +174,11 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
       // Clear cached files after successful upload
       _clearCachedFiles();
 
-      // Refresh the state
-      ref.invalidateSelf();
+      // Clear cached network image for the new URL to ensure fresh display
+      await CachedNetworkImage.evictFromCache(downloadUrl);
+
+      // Refresh the images
+      await refreshImages();
     } catch (error) {
       ref.read(loadingNotifierProvider.notifier).hideLoading();
 
@@ -226,6 +241,9 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
       // Remove from Firebase Storage
       await storageService.deleteImage(imageToRemove.storagePath);
 
+      // Clear cached network image
+      await CachedNetworkImage.evictFromCache(imageToRemove.url);
+
       // Remove from activity
       await activityRepository.removeImageFromActivity(activityId, imageId);
 
@@ -233,8 +251,8 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
           .read(successNotifierProvider.notifier)
           .showSuccessWithAutoClear('Image removed successfully!');
 
-      // Refresh the state
-      ref.invalidateSelf();
+      // Refresh the images
+      await refreshImages();
     } catch (error) {
       final appError = _handleImageError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
@@ -252,8 +270,8 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
           .read(successNotifierProvider.notifier)
           .showSuccessWithAutoClear('Images reordered successfully!');
 
-      // Refresh the state
-      ref.invalidateSelf();
+      // Refresh the images
+      await refreshImages();
     } catch (error) {
       final appError = _handleImageError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);
@@ -271,8 +289,8 @@ class ActivityImageNotifier extends _$ActivityImageNotifier {
           .read(successNotifierProvider.notifier)
           .showSuccessWithAutoClear('Caption updated successfully!');
 
-      // Refresh the state
-      ref.invalidateSelf();
+      // Refresh the images
+      await refreshImages();
     } catch (error) {
       final appError = _handleImageError(error);
       ref.read(errorNotifierProvider.notifier).showError(appError);

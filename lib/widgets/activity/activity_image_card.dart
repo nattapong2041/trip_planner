@@ -26,6 +26,7 @@ class ActivityImageCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     
+  print(image.toJson());
     return Card(
       clipBehavior: Clip.antiAlias,
       elevation: 2,

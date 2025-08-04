@@ -122,19 +122,20 @@
     - Maintain existing card layout and functionality
     - _Requirements: 5.1, 10.2_
 
-- [ ] 9. Implement offline support and synchronization
-  - [ ] 9.1 Add offline image caching
-    - Implement local storage for downloaded images
-    - Add cache management with size and age limits
-    - Create offline image loading with fallback to cached versions
-    - _Requirements: 9.3, 10.1_
-
-  - [ ] 9.2 Add offline upload queue
-    - Implement local queue for images selected while offline
-    - Add pending upload indicators in the UI
-    - Create automatic sync when connectivity is restored
-    - Add retry logic for failed uploads
+- [ ] 9. Implement network error handling and image caching
+  - [ ] 9.1 Add network-aware error handling
+    - Implement network connectivity checks before upload attempts
+    - Add clear error messages for offline upload attempts
+    - Create manual retry functionality for failed uploads
+    - Add refresh functionality to reload images from server
     - _Requirements: 9.1, 9.2, 9.4_
+
+  - [ ] 9.2 Configure cached_network_image for image display
+    - Use cached_network_image for all image displays
+    - Configure appropriate cache duration and size limits
+    - Add loading placeholders and error widgets
+    - Implement retry functionality for failed image loads
+    - _Requirements: 9.3, 9.5_
 
 - [ ] 10. Add collaborative features and real-time updates
   - [ ] 10.1 Implement real-time image updates
@@ -185,14 +186,14 @@
     - Test image compression functionality with various file sizes
     - Test Firebase Storage upload and download operations
     - Test image validation and error handling
-    - Test offline queue and synchronization logic
+    - Test network error handling and retry logic
     - _Requirements: 3.1, 4.1, 9.1_
 
   - [ ] 13.2 Create integration tests for image workflows
     - Test complete image upload workflow from picker to storage
     - Test image deletion with proper cleanup
     - Test collaborative image viewing and real-time updates
-    - Test offline functionality and sync behavior
+    - Test network error scenarios and manual retry functionality
     - _Requirements: 1.4, 6.3, 7.1, 9.2_
 
 - [ ] 14. Update Firebase configuration and security rules

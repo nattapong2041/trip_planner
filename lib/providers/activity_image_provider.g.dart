@@ -151,7 +151,7 @@ final class ActivityImageNotifierProvider extends $NotifierProvider<
 }
 
 String _$activityImageNotifierHash() =>
-    r'3a457b202215f45ce88b99850a97d3fa836b173d';
+    r'd1aee10558741b9cc3dffd92a7a9ec1f4664a4da';
 
 /// Notifier for managing activity images
 final class ActivityImageNotifierFamily extends $Family

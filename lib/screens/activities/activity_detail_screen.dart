@@ -120,41 +120,41 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
   }
 
   Widget _buildMobileLayout(BuildContext context, Activity activity) {
-    return Column(
-      children: [
-        // Activity Details Card
-        Padding(
-          padding: EdgeInsets.all(Responsive.getSpacing(context)),
-          child: ActivityCard(
-            activity: activity,
-            showActions: false,
-          ),
-        ),
-        
-        // Image Gallery Section - Constrained height for mobile
-        Padding(
-          padding: EdgeInsets.symmetric(horizontal: Responsive.getSpacing(context)),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxHeight: 140, // Reduced from 160 to prevent overflow
-              minHeight: 100,
-            ),
-            child: ActivityImageGallery(
-              key: ValueKey('gallery_${activity.id}_${activity.images.length}'),
-              activityId: activity.id,
-              allowReordering: true,
-              showAddButton: true,
+    return SingleChildScrollView(
+      child: Column(
+        children: [
+          // Activity Details Card
+          Padding(
+            padding: EdgeInsets.all(Responsive.getSpacing(context)),
+            child: ActivityCard(
+              activity: activity,
+              showActions: false,
             ),
           ),
-        ),
-        
-        const SizedBox(height: 16),
-        
-        // Brainstorm Ideas Section
-        Expanded(
-          child: _buildBrainstormSection(context, activity),
-        ),
-      ],
+          
+          // Image Gallery Section - Constrained height for mobile
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: Responsive.getSpacing(context)),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxHeight: 140, // Reduced from 160 to prevent overflow
+                minHeight: 100,
+              ),
+              child: ActivityImageGallery(
+                key: ValueKey('gallery_${activity.id}_${activity.images.length}'),
+                activityId: activity.id,
+                allowReordering: true,
+                showAddButton: true,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 16),
+          
+          // Brainstorm Ideas Section - Remove Expanded and let it size naturally
+          _buildBrainstormSection(context, activity),
+        ],
+      ),
     );
   }
 
@@ -164,32 +164,34 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
         // Left side - Activity Details and Images
         Expanded(
           flex: 1,
-          child: Padding(
-            padding: EdgeInsets.all(Responsive.getSpacing(context)),
-            child: Column(
-              children: [
-                // Activity Details Card
-                ActivityCard(
-                  activity: activity,
-                  showActions: false,
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Image Gallery
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxHeight: 160,
-                    minHeight: 120,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(Responsive.getSpacing(context)),
+              child: Column(
+                children: [
+                  // Activity Details Card
+                  ActivityCard(
+                    activity: activity,
+                    showActions: false,
                   ),
-                  child: ActivityImageGallery(
-                    key: ValueKey('gallery_tablet_${activity.id}_${activity.images.length}'),
-                    activityId: activity.id,
-                    allowReordering: true,
-                    showAddButton: true,
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Image Gallery
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxHeight: 160,
+                      minHeight: 120,
+                    ),
+                    child: ActivityImageGallery(
+                      key: ValueKey('gallery_tablet_${activity.id}_${activity.images.length}'),
+                      activityId: activity.id,
+                      allowReordering: true,
+                      showAddButton: true,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -197,7 +199,9 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
         // Right side - Brainstorm Ideas
         Expanded(
           flex: 2,
-          child: _buildBrainstormSection(context, activity),
+          child: SingleChildScrollView(
+            child: _buildBrainstormSection(context, activity),
+          ),
         ),
       ],
     );
@@ -209,42 +213,43 @@ class _ActivityDetailScreenState extends ConsumerState<ActivityDetailScreen> {
         // Left side - Activity Details and Images (fixed width)
         SizedBox(
           width: 400,
-          child: Padding(
-            padding: EdgeInsets.all(Responsive.getSpacing(context)),
-            child: Column(
-              children: [
-                // Activity Details Card
-                ActivityCard(
-                  activity: activity,
-                  showActions: false,
-                ),
-                
-                const SizedBox(height: 16),
-                
-                // Image Gallery
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxHeight: 160,
-                    minHeight: 120,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(Responsive.getSpacing(context)),
+              child: Column(
+                children: [
+                  // Activity Details Card
+                  ActivityCard(
+                    activity: activity,
+                    showActions: false,
                   ),
-                  child: ActivityImageGallery(
-                    key: ValueKey('gallery_desktop_${activity.id}_${activity.images.length}'),
-                    activityId: activity.id,
-                    allowReordering: true,
-                    showAddButton: true,
+                  
+                  const SizedBox(height: 16),
+                  
+                  // Image Gallery
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxHeight: 160,
+                      minHeight: 120,
+                    ),
+                    child: ActivityImageGallery(
+                      key: ValueKey('gallery_desktop_${activity.id}_${activity.images.length}'),
+                      activityId: activity.id,
+                      allowReordering: true,
+                      showAddButton: true,
+                    ),
                   ),
-                ),
-                
-                // Spacer to push content to top
-                const Spacer(),
-              ],
+                ],
+              ),
             ),
           ),
         ),
         
         // Right side - Brainstorm Ideas
         Expanded(
-          child: _buildBrainstormSection(context, activity),
+          child: SingleChildScrollView(
+            child: _buildBrainstormSection(context, activity),
+          ),
         ),
       ],
     );

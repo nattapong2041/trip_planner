@@ -56,11 +56,6 @@ class DayTimelineView extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Day header
-              _buildDayHeader(context, day, dayActivities.length),
-              
-              const SizedBox(height: 16),
-              
               // Timeline for timed activities
               if (timedActivities.isNotEmpty && showTimeSlots) ...[
                 Text(
@@ -102,78 +97,11 @@ class DayTimelineView extends ConsumerWidget {
                           onTap: () => onActivityTap?.call(activity),
                         ),
                 )),
-              ],
-              
-              // Add activity prompt
-              const SizedBox(height: 16),
-              _buildAddActivityPrompt(context),
+              ],      
             ],
           ),
         );
       },
-    );
-  }
-
-  Widget _buildDayHeader(BuildContext context, String day, int activityCount) {
-    final theme = Theme.of(context);
-    final dayNumber = day.split('-').last;
-    
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            theme.colorScheme.primaryContainer,
-            theme.colorScheme.primaryContainer.withValues(alpha: 0.7),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                dayNumber,
-                style: theme.textTheme.titleLarge?.copyWith(
-                  color: theme.colorScheme.onPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Day $dayNumber',
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                Text(
-                  '$activityCount ${activityCount == 1 ? 'activity' : 'activities'}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.8),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -266,49 +194,6 @@ class DayTimelineView extends ConsumerWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildAddActivityPrompt(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outline.withValues(alpha: 0.3),
-          style: BorderStyle.solid,
-        ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.add_circle_outline,
-            size: 32,
-            color: colorScheme.primary,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Add more activities',
-            style: theme.textTheme.titleSmall?.copyWith(
-              color: colorScheme.primary,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Drag from activity pool or create new activities',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
       ),
     );
   }

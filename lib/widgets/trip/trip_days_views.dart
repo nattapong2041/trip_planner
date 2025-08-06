@@ -39,7 +39,7 @@ class MobileTripDaysView extends ConsumerWidget {
     return CollapsibleDaySection(
       title: 'Activity Pool',
       subtitle: unassignedActivities.isEmpty
-          ? 'No unassigned activities'
+          ? null
           : '${unassignedActivities.length} ${unassignedActivities.length == 1 ? 'activity' : 'activities'}',
       icon: Icons.inventory_2_outlined,
       activities: unassignedActivities,
@@ -139,7 +139,7 @@ class TabletTripDaysView extends ConsumerWidget {
         child: CollapsibleDaySection(
           title: 'Activity Pool',
           subtitle: unassignedActivities.isEmpty
-              ? 'No unassigned activities'
+              ? null
               : '${unassignedActivities.length} ${unassignedActivities.length == 1 ? 'activity' : 'activities'}',
           icon: Icons.inventory_2_outlined,
           activities: unassignedActivities,
@@ -220,7 +220,7 @@ class DesktopTripDaysView extends ConsumerWidget {
         child: CollapsibleDaySection(
           title: 'Activity Pool',
           subtitle: unassignedActivities.isEmpty
-              ? 'No unassigned activities'
+              ? null
               : '${unassignedActivities.length} ${unassignedActivities.length == 1 ? 'activity' : 'activities'}',
           icon: Icons.inventory_2_outlined,
           activities: unassignedActivities,

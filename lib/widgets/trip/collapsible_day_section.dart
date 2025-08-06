@@ -12,7 +12,7 @@ class CollapsibleDaySection extends ConsumerWidget {
   const CollapsibleDaySection({
     super.key,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
     required this.icon,
     required this.activities,
     required this.isEmpty,
@@ -23,7 +23,7 @@ class CollapsibleDaySection extends ConsumerWidget {
   });
 
   final String title;
-  final String subtitle;
+  final String? subtitle;
   final IconData icon;
   final List<Activity> activities;
   final bool isEmpty;
@@ -73,7 +73,7 @@ class CollapsibleDaySection extends ConsumerWidget {
             ),
             const Spacer(),
             Text(
-              subtitle,
+              subtitle ?? "",
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(context).colorScheme.outline,
                   ),
